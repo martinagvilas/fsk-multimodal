@@ -15,7 +15,7 @@ def get_fsk(dataset_path, overwrite=False):
     if (file.is_file()) and overwrite == False:
         fsk = pd.read_csv(file)
     else:
-        concepts_info = get_common_concepts(dataset_path)
+        concepts_info = get_concepts_info(dataset_path)
         concepts_mcrae = [
             c.split(', ') if ',' in c else [c] 
             for c in concepts_info['concepts_mcrae']

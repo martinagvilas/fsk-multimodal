@@ -4,48 +4,8 @@ from pathlib import Path
 
 import clip
 import torch
-from torch.utils.data import DataLoader
 
-from fsk.dataprep.dataloader import ThingsDataset
-from fsk.dataprep.utils import get_fsk_concepts, get_fsk_features
-
-
-class ItmModel:
-    def __init__(
-        self, model_name, project_path, batch_idx=None, device='cpu'
-    ):
-        self.model_name = model_name
-        self.device = device
-        self.project_path = project_path
-        self._get_paths()
-        self.concepts = get_fsk_concepts(self.dataset_path)
-        self.sem_features = self._get_sem_features()
-        self.dataset = self._get_dataset(batch_idx)
-    
-    def _get_paths(self):
-        self.dataset_path = self.project_path / 'dataset'
-        self.things_path = self.dataset_path / 'things'
-        self.annot_path = self.dataset_path / 'annotations'
-        res_path = self.project_path / f'results/{self.model_name}'
-        results_folders = ['concept_match', 'feature_match', 'net_ft']
-        results_paths = {}
-        for rf in results_folders:
-            rf_path = res_path / rf
-            rf_path.mkdir(parents=True, exist_ok=True)
-            results_paths[rf] = rf_path
-        self.results_paths = results_paths
-        return
-
-    def _get_sem_features(self):
-        sem_features = get_fsk_features(self.dataset_path)
-        return sem_features
-
-    def _get_dataset(self, batch_idx):
-        ds = ThingsDataset(self.dataset_path, batch_idx=batch_idx)
-        dataloader = DataLoader(
-            ds, batch_size=None, batch_sampler=None, collate_fn=lambda x: x
-        )
-        return enumerate(dataloader)
+from fsk.it_match.itm import ItmModel, add_feature_extractor
 
 
 class ItmClip(ItmModel):
@@ -92,7 +52,10 @@ class ItmClip(ItmModel):
             if txt_type == 'concepts':
                 txt = self.concepts
             elif txt_type == 'sem_features':
-                txt = self.sem_features
+                txt = [
+                    ((" ").join(t[0].split("_"))).capitalize() + '.' 
+                    for t in self.features
+                ]
             self.model.__features__ = OrderedDict()
             tokens = clip.tokenize(txt)
             with torch.no_grad():
@@ -129,26 +92,11 @@ class ItmClip(ItmModel):
         return match
 
 
-def add_feature_extractor(model, layers):
-    def get_activation(layer_name):
-        def hook(_, input, output):
-            model.__features__[layer_name] = output.detach()
-        return hook
-    for layer_name, layer in model.named_modules():
-        if layer_name in layers:
-            layer.register_forward_hook(get_activation(layer_name))
-    return model
-
-
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', action='store', required=True)
     parser.add_argument('-pp', action='store', required=True)
-    parser.add_argument('-id', action='store', required=False)
-    model_name = parser.parse_args().m
     project_path = Path(parser.parse_args().pp)
-    batch_idx = parser.parse_args().id
 
-    itm = ItmClip(model_name, project_path, batch_idx)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    itm = ItmClip('clip', project_path, device=device)
     itm.compute_match()
-
