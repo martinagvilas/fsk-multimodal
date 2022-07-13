@@ -167,8 +167,9 @@ class ALBEF(nn.Module):
 
             score = self.itm_head(output.last_hidden_state[:, 0, :])
             score = torch.softmax(score, dim=-1)[:, 1]
-        hidden_states = torch.vstack((text_hidden_states, multi_hidden_states))
-        return dict(score=score, i2t=sim_i2t, t2i=sim_t2i, hs=hidden_states)
+        hidden_states = {'txt': text_hidden_states[1:], 'multi': multi_hidden_states[1:]}
+        c_out = {'txt': text_feat, 'img': image_feat}
+        return dict(score=score, i2t=sim_i2t, t2i=sim_t2i, hs=hidden_states, c_out=c_out)
 
     @torch.no_grad()
     def _similarity_and_matching(self, image, text_embeds, text_hidden_states, text_attention_mask, pairwise=False) -> Dict:

@@ -53,8 +53,8 @@ class ItmClip(ItmModel):
                 txt = self.concepts
             elif txt_type == 'sem_features':
                 txt = [
-                    ((" ").join(t[0].split("_"))).capitalize() + '.' 
-                    for t in self.features
+                    ((" ").join(t.split("_"))).capitalize() + '.' 
+                    for t in self.sem_features
                 ]
             self.model.__features__ = OrderedDict()
             tokens = clip.tokenize(txt)
