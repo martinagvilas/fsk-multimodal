@@ -17,7 +17,6 @@ class ItmAlbef(ItmModel):
             'txt': [f'text_encoder.encoder.layer.{n}' for n in range(12)],
             'img': [f'visual_encoder.blocks.{n}' for n in range(12)]
         }
-        ## TODO: define these and assert that the length of hs is the same
         self.load_model()
     
     def load_model(self):
@@ -85,9 +84,9 @@ class ItmAlbef(ItmModel):
             info_key = 'features'
         # Determine if text hidden states and contrastive projections files
         # exist or should be computed
-        hs_txt_file = self.results_paths['net_ft'] / f'hs_{txt_type}.pt'
-        cout_txt_file = self.results_paths['net_ft'] / f'c_out_{txt_type}.pt'
-        if hs_txt_file.is_file():
+        txt_hs_file = self.results_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
+        txt_c_out_file = self.results_paths['net_ft'] / f'c-out_txt_{txt_type}.pt'
+        if txt_hs_file.is_file():
             compute_txt_hs = False
         else:
             compute_txt_hs = True
@@ -95,8 +94,11 @@ class ItmAlbef(ItmModel):
             txt_c_out = []
         # Define image hidden states and projections file
         img_id = data['img_id']
-        hs_img_file = self.results_paths['net_ft'] / f'hs_img_{img_id}.pt'
-        cout_img_file = self.results_paths['net_ft'] / f'c_out_img_{img_id}.pt'
+        img_hs_file = self.results_paths['net_ft'] / f'hs_img_{img_id}.pt'
+        img_c_out_file = self.results_paths['net_ft'] / f'c-out_img_{img_id}.pt'
+        # Define multimodal hidden states
+        multi_hs_file = self.results_paths['net_ft'] / f'hs_multi_{img_id}.pt'
+        multi_hs = []
         # Compute match and hidden states
         match = []
         for t in txt:
@@ -115,45 +117,30 @@ class ItmAlbef(ItmModel):
             match.append(out['score'])
             # Save visual stream hidden states and contrastive projections 
             # if file doesn't exist
-            if ~ hs_img_file.is_file():
+            if not img_hs_file.is_file():
                 img_hs = []
                 for l in self.layers['img']:
                     img_hs.append(self.model.__features__[l])
-                torch.save(torch.stack(img_hs), hs_img_file)
-                torch.save(torch.squeeze(out['c_out']['img']), cout_img_file)
+                torch.save(torch.squeeze(torch.stack(img_hs)), img_hs_file)
+                torch.save(torch.squeeze(out['c_out']['img']), img_c_out_file)
             # Get text stream hidden states and contrastive projections 
             # if file doesn't exist
             if compute_txt_hs == True:
                 txt_hs.append(torch.squeeze(out['hs']['txt'][:, :, 0, :]))
-                txt_c_out.append(torch.squeeze(out['c_out'][c]))
-            # Get hidden states
+                txt_c_out.append(torch.squeeze(out['c_out']['txt']))
+            # Get multimodal stream hidden states
             if t in data[info_key]:
-                # Get visual stream hidden states
-                t_img_hs = []
-                for l in self.layers['img']:
-                    t_img_hs.append(self.model.__features__[l])
-                hs['img'].append(torch.squeeze(torch.stack(t_img_hs)))
-                # Get text stream hidden states
-                hs['txt'].append(torch.squeeze(out['hs']['txt'][:, :, 0, :]))
-                # Get multimodal stream hidden states
-                hs['multi'].append(torch.squeeze(out['hs']['multi'][:, :, 0, :]))
-                # Get contrastive projections
-                for c in c_out.keys():
-                    c_out[c].append(torch.squeeze(out['c_out'][c]))
-        # Save hidden states
-        for key, values in hs.items():
-            file = self.results_paths['net_ft'] / f'hs_{key}_{data["img_id"]}.pt'
-            torch.save(torch.stack(values), file)
-        # Save contrastive projections
-        for key, values in c_out.items():
-            file = self.results_paths['net_ft'] / f'c_out_{key}_{data["img_id"]}.pt'
-            torch.save(torch.stack(values), file)
+                multi_hs.append(torch.squeeze(out['hs']['multi'][:, :, 0, :]))
+        # Save text hidden states and contrastive projections
+        if compute_txt_hs == True:
+            torch.save(torch.stack(txt_hs), txt_hs_file)
+            torch.save(torch.stack(txt_c_out), txt_c_out_file)
+        # Save multimodal hidden states
+        torch.save(torch.stack(multi_hs), multi_hs_file)
         # Return match values
         match = torch.squeeze(torch.stack(match))
         return match
 
-        # hs = {hs_type: [] for hs_type in ['img', 'txt', 'multi']}
-        # c_out = {out_type: [] for out_type in ['img', 'txt']}
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
