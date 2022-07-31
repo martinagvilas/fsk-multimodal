@@ -27,7 +27,7 @@ class ItmModel:
             rf_path = res_path / rf
             rf_path.mkdir(parents=True, exist_ok=True)
             results_paths[rf] = rf_path
-        self.results_paths = results_paths
+        self.res_paths = results_paths
         return
 
     def _get_sem_features(self):

@@ -58,8 +58,8 @@ class ItmAlbef(ItmModel):
         for _, data in self.dataset:
             # Check file doesn't exist
             img_id = data['img_id']
-            c_match_file = self.results_paths['concept_match'] / f'{img_id}.pt'
-            sf_match_file = self.results_paths['feature_match'] / f'{img_id}.pt'
+            c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'
+            sf_match_file = self.res_paths['feature_match'] / f'{img_id}.pt'
             if c_match_file.is_file() and sf_match_file.is_file():
                 continue
             # Compute image features
@@ -84,8 +84,8 @@ class ItmAlbef(ItmModel):
             info_key = 'features'
         # Determine if text hidden states and contrastive projections files
         # exist or should be computed
-        txt_hs_file = self.results_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
-        txt_c_out_file = self.results_paths['net_ft'] / f'c-out_txt_{txt_type}.pt'
+        txt_hs_file = self.res_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
+        txt_c_out_file = self.res_paths['net_ft'] / f'c-out_txt_{txt_type}.pt'
         if txt_hs_file.is_file():
             compute_txt_hs = False
         else:
@@ -94,10 +94,12 @@ class ItmAlbef(ItmModel):
             txt_c_out = []
         # Define image hidden states and projections file
         img_id = data['img_id']
-        img_hs_file = self.results_paths['net_ft'] / f'hs_img_{img_id}.pt'
-        img_c_out_file = self.results_paths['net_ft'] / f'c-out_img_{img_id}.pt'
+        img_hs_file = self.res_paths['net_ft'] / f'hs_img_{img_id}.pt'
+        img_c_out_file = self.res_paths['net_ft'] / f'c-out_img_{img_id}.pt'
         # Define multimodal hidden states
-        multi_hs_file = self.results_paths['net_ft'] / f'hs_multi_{img_id}.pt'
+        multi_hs_file = (
+            self.res_paths['net_ft'] / f'hs_multi_{txt_type}_{img_id}.pt'
+        )
         multi_hs = []
         # Compute match and hidden states
         match = []

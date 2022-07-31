@@ -33,8 +33,8 @@ class ItmClip(ItmModel):
         features_ft = self._get_txt_ft(txt_type='sem_features')
         for _, data in self.dataset:
             img_id = data['img_id']
-            c_match_file = self.results_paths['concept_match'] / f'{img_id}.pt'
-            sf_match_file = self.results_paths['feature_match'] / f'{img_id}.pt'
+            c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'
+            sf_match_file = self.res_paths['feature_match'] / f'{img_id}.pt'
             if c_match_file.is_file() and sf_match_file.is_file():
                 continue
             img_ft = self._encode_image(data['img'], img_id)
@@ -44,7 +44,7 @@ class ItmClip(ItmModel):
             torch.save(sft_match, sf_match_file)
 
     def _get_txt_ft(self, txt_type='concepts', overwrite=False):
-        out_file = self.results_paths['net_ft'] / f'out_txt_{txt_type}.pt'
+        out_file = self.res_paths['net_ft'] / f'out_txt_{txt_type}.pt'
         if out_file.is_file() and overwrite == False:
             txt_ft = torch.load(out_file)
         else:
@@ -66,7 +66,7 @@ class ItmClip(ItmModel):
             for l in self.layers['txt']:
                 hs.append(self.model.__features__[l])
             hs = torch.stack(hs)
-            hs_file = self.results_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
+            hs_file = self.res_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
             torch.save(hs, hs_file)
         return txt_ft
 
@@ -75,13 +75,13 @@ class ItmClip(ItmModel):
         self.model.__features__ = OrderedDict()
         with torch.no_grad():
             img_ft = self.model.encode_image(img)
-            out_file = self.results_paths['net_ft'] / f'out_img_{img_id}.pt'
+            out_file = self.res_paths['net_ft'] / f'c-out_img_{img_id}.pt'
             torch.save(img_ft, out_file)
             hs = []
             for l in self.layers['img']:
                 hs.append(self.model.__features__[l])
             hs = torch.stack(hs)
-            hs_file = self.results_paths['net_ft'] / f'hs_img_{img_id}.pt'
+            hs_file = self.res_paths['net_ft'] / f'hs_img_{img_id}.pt'
             torch.save(hs, hs_file)
         return img_ft
 
