@@ -1,4 +1,6 @@
-# Probing Feature-based Semantic Knowledge in Vision-and-Language Deep Neural Networks
+# Probing feature-based semantic knowledge in V+L DNNs
+
+{TODO: write description of the study and link to pre-print}
 
 ## 1. Download dataset information
 You will need to:

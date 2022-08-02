@@ -11,10 +11,15 @@ mkdir things
 unzip things.zip -d things
 rm things.zip
 
-cd things/
+cd things
 mkdir object_images
 
 DIRECTORY=.
+
+unzip $DIRECTORY/object_images_L-Q.zip
+mv object_images_L-Q/* object_images/
+rm -rf object_images_L-Q.zip
+rm -rf object_images_L-Q
 
 for i in $DIRECTORY/object_images_*.zip; do
     unzip $i -d object_images

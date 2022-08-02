@@ -83,11 +83,8 @@ class ItmVilt(ItmModel):
         return match
 
 
-if __name__ == '__main__':    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-pp', action='store', required=True)
-    project_path = Path(parser.parse_args().pp)
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+def run(project_path, device):
+    print("Computing Image-Text matching using VILT model")
     itm = ItmVilt('vilt', project_path, device=device)
     itm.compute_match()
+    return 
