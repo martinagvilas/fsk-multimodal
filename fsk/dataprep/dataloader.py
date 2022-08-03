@@ -28,7 +28,7 @@ class ThingsDataset(Dataset):
                 new_row['img_path'] = i_dir
                 stim_info.append(new_row)
         stim_info = pd.concat(stim_info, axis=1).T
-        return stim_info[:2]
+        return stim_info
 
     def __len__(self):
         return len(self.stimuli_info)
