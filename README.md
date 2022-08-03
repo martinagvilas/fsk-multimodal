@@ -32,7 +32,7 @@ We recommend that you use a [conda environment](https://docs.conda.io/projects/c
 
 Step into your clone folder, and run the following commands:
 ```
-conda create --name fsk -python=3.9
+conda create --name fsk python=3.9
 conda activate fsk
 pip install -r requirements.txt
 pip install .
