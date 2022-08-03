@@ -1,7 +1,6 @@
-import argparse
 from collections import OrderedDict
-from pathlib import Path
 
+from tqdm import tqdm
 import torch
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, \
     InterpolationMode
@@ -55,7 +54,7 @@ class ItmAlbef(ItmModel):
         return model, img_transform
     
     def compute_match(self):
-        for _, data in self.dataset:
+        for _, data in tqdm(enumerate(self.dataset), total=len(self.dataset)):
             # Check file doesn't exist
             img_id = data['img_id']
             c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'
@@ -114,7 +113,7 @@ class ItmAlbef(ItmModel):
             self.model.__features__ = OrderedDict()
             with torch.no_grad():
                 out = self.model.similarity_and_matching(
-                    img_ft.to(device), t_ft.to(device), pairwise=True
+                    img_ft.to(self.device), t_ft.to(self.device), pairwise=True
                 )
             match.append(out['score'])
             # Save visual stream hidden states and contrastive projections 

@@ -7,8 +7,11 @@ from fsk.it_match import itm_clip, itm_albef, itm_vilt
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', action='store', required=True)
-    parser.add_argument('-pp', action='store', required=True)
+    m_help = 'Select which model to run. Can be one of the following options: \
+        all, clip, vilt, albef'
+    parser.add_argument('-m', action='store', required=True, help=m_help)
+    p_help = 'Path to the project folder containing the dataset and source code'
+    parser.add_argument('-pp', action='store', required=True, help=p_help)
     model = parser.parse_args().m
     project_path = Path(parser.parse_args().pp)
 

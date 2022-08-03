@@ -1,6 +1,4 @@
-import argparse
-from pathlib import Path
-
+from tqdm import tqdm
 import torch
 from transformers import ViltProcessor, ViltForImageAndTextRetrieval
 
@@ -26,7 +24,7 @@ class ItmVilt(ItmModel):
         return model, processor
     
     def compute_match(self):
-        for _, data in self.dataset:
+        for _, data in tqdm(enumerate(self.dataset), total=len(self.dataset)):
             # Check file doesn't exist
             img_id = data['img_id']
             c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'

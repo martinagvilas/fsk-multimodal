@@ -1,9 +1,7 @@
-import argparse
 from collections import OrderedDict
-from pathlib import Path
 
 import clip
-import tqdm
+from tqdm import tqdm
 import torch
 
 from fsk.it_match.itm import ItmModel, add_feature_extractor
@@ -32,7 +30,7 @@ class ItmClip(ItmModel):
     def compute_match(self):
         concepts_ft = self._get_txt_ft(txt_type='concepts')
         features_ft = self._get_txt_ft(txt_type='sem_features')
-        for _, data in tqdm(self.dataset[:3], total=len(self.dataset)):
+        for _, data in tqdm(enumerate(self.dataset), total=len(self.dataset)):
             img_id = data['img_id']
             c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'
             sf_match_file = self.res_paths['feature_match'] / f'{img_id}.pt'

@@ -79,7 +79,7 @@ def get_concepts_info(dataset_path, overwrite=False):
             s for s in things_info['Synset'] 
             if (s in mcrae_info['Synset'].tolist()) & (isinstance(s, str))
         ]
-        print(f'Found {len(common_synsets)} common synsets', flush=True)
+        #print(f'Found {len(common_synsets)} common synsets', flush=True)
         things_concepts = [
             things_info.loc[things_info['Synset']==s]['Concept'].values[0]
             for s in common_synsets

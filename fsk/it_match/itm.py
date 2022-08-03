@@ -39,7 +39,7 @@ class ItmModel:
         dataloader = DataLoader(
             ds, batch_size=None, batch_sampler=None, collate_fn=lambda x: x
         )
-        return enumerate(dataloader)
+        return dataloader
 
 
 def add_feature_extractor(model, layers):

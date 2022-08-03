@@ -1,4 +1,4 @@
-# Probing feature-based semantic knowledge in V+L DNNs
+# Probing feature-based semantic knowledge in Vision+Language deep neural networks
 
 {TODO: write description of the study and link to pre-print}
 
@@ -24,6 +24,7 @@ Read the usage terms and retrieve this password [here](https://osf.io/srv7t).
 [this link](https://sites.google.com/site/kenmcraelab/norms-data).
 
 {TODO: how to ensure the availability of these files}
+{TODO: how to rename the relevant file}
 
 
 ## 2. Install software
@@ -38,3 +39,11 @@ pip install .
 ```
 
 ## 3. Run experiments
+To compute the matching between each image and semantic feature using all models, 
+run:
+
+```
+ python -m fsk.it_match.run -m all -pp {your path to the project folder}
+```
+
+You can also select which model to run by changing the value of the `-m` flag.
