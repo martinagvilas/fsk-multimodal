@@ -90,12 +90,6 @@ class ALBEF(nn.Module):
                 del state_dict[key]
 
         model.load_state_dict(state_dict, strict=False)
-
-        # model.queue_size = 65472
-        # model.image_queue = model.image_queue[:, :65472]
-        # model.text_queue = model.text_queue[:, :65472]
-        # model.idx_queue = model.idx_queue[:, :65472]
-
         return model
 
     @torch.no_grad()

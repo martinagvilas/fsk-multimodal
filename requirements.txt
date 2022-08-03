@@ -5,7 +5,6 @@ pandas == 1.2.4
 scikit-learn
 
 datasets
-fairscale
 nltk == 3.6.7
 timm == 0.4.9
 tqdm

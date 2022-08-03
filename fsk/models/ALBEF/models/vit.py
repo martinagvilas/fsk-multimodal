@@ -3,7 +3,6 @@ from functools import partial
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from fairscale.nn import checkpoint_wrapper
 from timm.models.layers import trunc_normal_, DropPath
 from timm.models.vision_transformer import PatchEmbed
 
@@ -141,9 +140,6 @@ class VisionTransformer(nn.Module):
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
             for i in range(depth)])
-
-        if self.checkpoint:
-            self.blocks = nn.ModuleList([checkpoint_wrapper(block, offload_to_cpu=False) for block in self.blocks])
 
         self.norm = norm_layer(embed_dim)
 
