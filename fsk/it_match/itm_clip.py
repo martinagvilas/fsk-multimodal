@@ -45,7 +45,7 @@ class ItmClip(ItmModel):
     def _get_txt_ft(self, txt_type='concepts', overwrite=False):
         out_file = self.res_paths['net_ft'] / f'out_txt_{txt_type}.pt'
         if out_file.is_file() and overwrite == False:
-            txt_ft = torch.load(out_file)
+            txt_ft = torch.load(out_file).to(self.device)
         else:
             print(f"Computing {txt_type} embeddings", flush=True)
             if txt_type == 'concepts':
@@ -56,7 +56,7 @@ class ItmClip(ItmModel):
                     for t in self.sem_features
                 ]
             self.model.__features__ = OrderedDict()
-            tokens = clip.tokenize(txt)
+            tokens = clip.tokenize(txt).to(self.device)
             with torch.no_grad():
                 txt_ft = self.model.encode_text(tokens)
             torch.save(txt_ft, out_file)
@@ -70,7 +70,7 @@ class ItmClip(ItmModel):
         return txt_ft
 
     def _encode_image(self, img, img_id):
-        img = torch.unsqueeze(self.img_transform(img), dim=0)
+        img = torch.unsqueeze(self.img_transform(img), dim=0).to(self.device)
         self.model.__features__ = OrderedDict()
         with torch.no_grad():
             img_ft = self.model.encode_image(img)
