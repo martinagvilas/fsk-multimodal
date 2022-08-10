@@ -40,10 +40,9 @@ class ThingsDataset(Dataset):
         out['img_id'] = item_info['img_path'].stem
         out['img'] = Image.open(item_info['img_path']).convert('RGB')
 
-        things_concepts = item_info['concepts_things']
-        out['concepts_things'] = things_concepts
+        out['concepts_things'] = item_info['concepts_things']
         out['concepts_mcrae'] = item_info['concepts_mcrae']
         out['synset'] = item_info['synsets'] 
-        out['features'] = get_fsk_features(self.dataset_path, [things_concepts])
+        out['features'] = get_fsk_features(self.dataset_path, [out['synset']])
 
         return out

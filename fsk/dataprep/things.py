@@ -11,11 +11,12 @@ def load_things_info(things_path):
 
 def load_things_synsets_info(things_path):
     things_info = load_things_info(Path(things_path))
-    things_synsets_info = things_info[['Word', 'uniqueID', 'Wordnet ID4']]
-    things_synsets_info = things_synsets_info.rename(
+    synsets_info = things_info[['Word', 'uniqueID', 'Wordnet ID4']]
+    synsets_info = synsets_info.rename(
         columns={'Word': 'Concept', 'uniqueID': 'ID', 'Wordnet ID4': 'Synset'}
     )
-    return things_synsets_info
+    synsets_info['Synset'] = synsets_info['Synset'].replace(regex=r"\.", value='-')
+    return synsets_info
 
 
 def load_things_imgs_dir(things_path, concepts=None):
@@ -29,5 +30,3 @@ def load_things_imgs_dir(things_path, concepts=None):
         else:
             continue
     return imgs_paths
-
-

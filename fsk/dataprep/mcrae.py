@@ -11,8 +11,9 @@ def load_mcrae_info(annot_path):
 
 def load_mcrae_synsets_info(annot_path):
     file = Path(annot_path) / 'mcrae_synsets_annotated.csv'
-    mcrae_synsets_info = pd.read_csv(file, sep=';')
-    mcrae_synsets_info = mcrae_synsets_info.rename(columns={
+    synsets_info = pd.read_csv(file, sep=';')
+    synsets_info =synsets_info.rename(columns={
         'label': 'Concept', 'synset': 'Synset'
     })
-    return mcrae_synsets_info
+    synsets_info['Synset'] = synsets_info['Synset'].replace(regex=r"\.", value='-')
+    return synsets_info

@@ -16,15 +16,17 @@ def get_fsk(dataset_path, overwrite=False):
         fsk = pd.read_csv(file)
     else:
         concepts_info = get_concepts_info(dataset_path)
-        concepts_mcrae = [
-            c.split(', ') if ',' in c else [c] 
-            for c in concepts_info['concepts_mcrae']
-        ]
-        concepts_mcrae = [i for c in concepts_mcrae for i in c]
         mcrae_info = load_mcrae_info(annot_path)
         fsk = mcrae_info[['Concept', 'Feature', 'BR_Label']]
-        fsk.columns = ['concepts_mcrae', 'features', 'features_type']
-        fsk = fsk.loc[fsk['concepts_mcrae'].isin(concepts_mcrae)]
+        # Map concepts to synsets
+        mcrae_synsets = load_mcrae_synsets_info(annot_path)
+        synset_map = pd.Series(
+            mcrae_synsets['Synset'].values, index=mcrae_synsets['Concept']
+        ).to_dict()
+        fsk = fsk.replace(to_replace=synset_map)
+        # Filter synsets
+        fsk = fsk.loc[fsk['Concept'].isin(concepts_info['synsets'])]
+        fsk.columns = ['synsets', 'features', 'features_type']
         # Replace feature type names
         fsk['features_type'] = fsk['features_type'].replace(
             regex=r"^visual.+", value='visual_perceptual'
@@ -38,19 +40,7 @@ def get_fsk(dataset_path, overwrite=False):
         # Add idx to features
         f_map = get_feature_idx_map(annot_path, fsk['features'].unique())
         fsk['features_idx'] = fsk['features'].map(f_map)
-        # Merge with other concepts data
-        for idx, r_info in fsk.iterrows():
-            c_info = concepts_info.loc[
-                concepts_info['concepts_mcrae']
-                .str.contains(r_info['concepts_mcrae'])
-            ]
-            fsk.loc[idx,'concepts_things'] = c_info['concepts_things'].values[0]
-            fsk.loc[idx,'synsets']= c_info['synsets'].values[0]
-        # Reorder data and save
-        fsk = fsk[[
-            'concepts_things', 'concepts_mcrae', 'synsets', 
-            'features', 'features_idx', 'features_type'
-        ]]
+        # Save
         fsk.to_csv(file, index=False)
     return fsk
 
@@ -116,24 +106,21 @@ def get_feature_idx_map(annot_path, features=None):
     return features_map
 
 
-def get_fsk_features(dataset_path, concepts=None):
+def get_fsk_features(dataset_path, synsets=None):
     fsk = get_fsk(dataset_path)
-    if concepts != None:
-        fsk = fsk.loc[fsk['concepts_things'].isin(concepts)]
+    if synsets != None:
+        fsk = fsk.loc[fsk['synsets'].isin(synsets)]
     features = fsk['features'].unique().tolist()
     return features
 
 
-def get_fsk_concepts(dataset_path, source='things'):
+def get_fsk_synsets(dataset_path):
     fsk = get_fsk(dataset_path)
-    if source == 'things':
-        concepts = fsk['concepts_things'].unique().tolist()
-    elif source == 'mcrae':
-        print("Not implemented yet")
+    synsets = fsk['synsets'].unique().tolist()
+    return synsets
+
+
+def get_concepts(dataset_path, source='things'):
+    concepts_info = get_concepts_info(dataset_path)
+    concepts = concepts_info[f'concepts_{source}'].tolist()
     return concepts
-
-
-def get_fsk_concepts_ids(dataset_path):
-    fsk = get_fsk(dataset_path)
-    concepts_ids = fsk['concepts_ids'].unique().tolist()
-    return concepts_ids

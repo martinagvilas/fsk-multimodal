@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 
 from fsk.dataprep.dataloader import ThingsDataset
-from fsk.dataprep.utils import get_fsk_concepts, get_fsk_features
+from fsk.dataprep.utils import get_concepts, get_fsk_features
 
 
 class ItmModel:
@@ -12,7 +12,7 @@ class ItmModel:
         self.device = device
         self.project_path = project_path
         self._get_paths()
-        self.concepts = get_fsk_concepts(self.dataset_path)
+        self.concepts = get_concepts(self.dataset_path)
         self.sem_features = self._get_sem_features()
         self.dataset = self._get_dataset(batch_idx)
     
