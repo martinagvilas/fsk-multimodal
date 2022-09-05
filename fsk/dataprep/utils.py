@@ -51,13 +51,14 @@ def get_concepts_info(dataset_path, overwrite=False):
     Parameters
     ----------
     dataset_path : str or pathlib Path
-        Path to dataset.
+        Path to folder containing dataset information.
 
     Returns
     -------
     pd DataFrame
         Info about shared concepts in the Things and McRae dataset.
     """
+    ## TODO: which info?
     annot_path = Path(dataset_path) / 'annotations'
     file = annot_path / 'concepts_info.csv'
     if file.is_file() and overwrite == False:
@@ -87,9 +88,9 @@ def get_concepts_info(dataset_path, overwrite=False):
             'concepts_things': things_concepts, 'ids_things': things_ids, 
             'concepts_mcrae': mcrae_concepts, 'synsets': common_synsets
         })
-        c_info['concepts_mcrae'] = c_info['concepts_mcrae'].replace(
-            regex=r"_.+", value=''
-        )
+        # c_info['concepts_mcrae'] = c_info['concepts_mcrae'].replace(
+        #     regex=r"_.+", value=''
+        # )
         c_info.to_csv(file, index=False)
     return c_info
 
@@ -121,6 +122,35 @@ def get_fsk_synsets(dataset_path):
 
 
 def get_concepts(dataset_path, source='things'):
+    """Get list of shared shared concepts in the Things and McRae dataset.
+
+    Parameters
+    ----------
+    dataset_path : str or pathlib Path
+        Path to folder containing dataset information.
+
+    Returns
+    -------
+    list
+       Shared concepts in the Things and McRae dataset.
+    """
     concepts_info = get_concepts_info(dataset_path)
     concepts = concepts_info[f'concepts_{source}'].tolist()
     return concepts
+
+
+def get_synsets_ids(dataset_path):
+    imgs_path = dataset_path / 'things/object_images'
+    concepts_info = get_concepts_info(dataset_path)
+    imgs_ids = {}
+    concepts = {'mcrae': [], 'things': []}
+    for _, row in concepts_info.iterrows():
+        synset = row['synsets']
+        concept_dir = imgs_path / row['ids_things']
+        concepts['mcrae'].append(row['concepts_mcrae'])
+        concepts['things'].append(row['concepts_things'])
+        concept_imgs = [
+            d.name for d in concept_dir.iterdir() if d.suffix == '.jpg'
+        ]
+        imgs_ids[synset] = concept_imgs
+    return imgs_ids, concepts
