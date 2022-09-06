@@ -114,9 +114,9 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
     # Compute distances of contrastive head
     if c_out_compute == True:
         file_prefix = net_ft_path / f'c-out_{stream}'
-        avg_vals = load_net_features(
+        avg_vals = np.squeeze(load_net_features(
             list(imgs_ids.values()), file_prefix, concept_idxs
-        )
+        ))
         l_dist = pdist(avg_vals, metric='cosine')
         with open(c_out_file, 'wb') as f:
             pickle.dump(l_dist, f)
@@ -146,8 +146,8 @@ def load_net_features(imgs_paths, file_prefix, concept_idxs=None):
                 continue
         avg_vals.append(torch.mean(torch.stack(s_vals), dim=0))
     avg_vals = torch.stack(avg_vals)
-    if len(avg_vals.shape) == 4:
-        avg_vals = torch.flatten(avg_vals, start_dim=2, end_dim=3)
+    if len(avg_vals.shape) >= 4:
+        avg_vals = torch.flatten(avg_vals, start_dim=2, end_dim=-1)
     avg_vals = avg_vals.detach().numpy()
     return avg_vals
 
