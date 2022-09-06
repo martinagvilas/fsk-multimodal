@@ -46,7 +46,7 @@ class RSA():
                     self.project_path, self.synsets, self.concepts['mcrae']
                 )
             else:
-                if model['stream'] == 'img':
+                if (model['stream'] == 'img') or (model['stream'] == 'multi'):
                     get_visual_net_distances(
                         self.project_path, model['dnn'], model['stream'],
                         self.models_info[idx]['layers'], self.synsets_ids

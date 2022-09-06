@@ -7,7 +7,7 @@ from scipy.spatial.distance import pdist
 import torch
 
 from fsk.dataprep.mcrae import load_mcrae_info
-from fsk.dataprep.utils import get_fsk_features
+from fsk.dataprep.utils import get_fsk_features, get_concepts
 
 
 def get_mcrae_distances(project_path, synsets, concepts, overwrite=False):
@@ -59,10 +59,17 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
     # Define paths
     net_ft_path = project_path / 'results' / model / 'net_ft'
     dist_path = project_path / 'results/rsa/distances'
+
+    # Add concept idxs to stream multimodal and change its name
+    if stream == 'img':
+        concept_idxs = None
+    elif stream == 'multi':
+        concept_idxs = get_concept_idxs(project_path)
+        stream = 'multi_concepts'
     
     # Load hidden states
     hs = [l for l in layers if l.startswith('hs_')]
-    dist_files = [dist_path / f'{model}_img_{l}.pkl' for l in hs]
+    dist_files = [dist_path / f'{model}_{stream}_{l}.pkl' for l in hs]
     dist = {}
     for l, file in zip(hs, dist_files):
         if file.is_file():
@@ -75,7 +82,7 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
     
     # Load contrastive head features
     if 'c_out' in layers:
-        c_out_file = dist_path / f'{model}_img_c-out.pkl'
+        c_out_file = dist_path / f'{model}_{stream}_c-out.pkl'
         if c_out_file.is_file():
             with open(c_out_file, 'rb') as f:
                 dist['c_out'] = pickle.load(f)
@@ -88,8 +95,9 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
     # Compute any missing features
     if hs_compute == True:
         file_prefix = net_ft_path / f'hs_{stream}'
-        avg_vals = load_net_features(list(imgs_ids.values()), file_prefix)
-        dist = []
+        avg_vals = load_net_features(
+            list(imgs_ids.values()), file_prefix, concept_idxs
+        )
         for l in hs:
             vals = np.squeeze(avg_vals[:, 0, :])
             avg_vals = np.delete(avg_vals, 0, axis=1)  # delete to free memory
@@ -97,19 +105,22 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
                 continue
             else: 
                 l_dist = pdist(vals, metric='cosine')
-                with open(dist_files[l], 'wb') as f:
+                l_idx = int(l.split('_')[1])
+                with open(dist_files[l_idx], 'wb') as f:
                     pickle.dump(l_dist, f)
                 dist[l] = l_dist
         del avg_vals
         
     # Compute distances of contrastive head
-    if c_out_compute  == True:
+    if c_out_compute == True:
         file_prefix = net_ft_path / f'c-out_{stream}'
-        avg_vals = load_net_features(list(imgs_ids.values()), file_prefix)
+        avg_vals = load_net_features(
+            list(imgs_ids.values()), file_prefix, concept_idxs
+        )
         l_dist = pdist(avg_vals, metric='cosine')
         with open(c_out_file, 'wb') as f:
             pickle.dump(l_dist, f)
-        dist[l] = l_dist
+        dist['c_out'] = l_dist
         del avg_vals
 
     # Define labels
@@ -118,18 +129,19 @@ def get_visual_net_distances(project_path, model, stream, layers, imgs_ids):
     return (dist, labels)
 
 
-def load_net_features(imgs_paths, file_prefix):
+def load_net_features(imgs_paths, file_prefix, concept_idxs=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     avg_vals = []
-    for s_imgs in imgs_paths:
+    for s_idx, s_imgs in enumerate(imgs_paths):
         s_vals = []
         for img in s_imgs:
             img_f = f'{file_prefix}_{img}.pt'
             # One file got corrupted during transfer
             try:
-                s_vals.append(torch.load(
-                    img_f, map_location=torch.device(device)
-                ))  
+                img_ft = torch.load(img_f, map_location=torch.device(device))
+                if concept_idxs != None:
+                    img_ft = img_ft[concept_idxs[s_idx]]
+                s_vals.append(img_ft)
             except:
                 continue
         avg_vals.append(torch.mean(torch.stack(s_vals), dim=0))
@@ -138,3 +150,24 @@ def load_net_features(imgs_paths, file_prefix):
         avg_vals = torch.flatten(avg_vals, start_dim=2, end_dim=3)
     avg_vals = avg_vals.detach().numpy()
     return avg_vals
+
+
+def get_concept_idxs(project_path):
+    concepts = get_concepts(project_path / 'dataset')
+    idxs = []
+    same_word = {}
+    for c1 in concepts:
+        shared_word = []
+        for c2 in concepts:
+            if c2 in c1:
+                shared_word.append(c2)
+        idx = [i for i, w in enumerate(shared_word) if w == c1]
+        if (len(idx) > 1) & (c1 in same_word.keys()):
+            idxs.append(idx[same_word[c1]])
+            same_word[c1] += 1
+        elif (len(idx) > 1) & (c1 not in same_word.keys()):
+            idxs.append(idx[0])
+            same_word[c1] = 1
+        else:
+            idxs.append(idx[0])
+    return idxs
