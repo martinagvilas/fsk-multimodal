@@ -70,7 +70,6 @@ def get_concepts_info(dataset_path, overwrite=False):
             s for s in things_info['Synset'] 
             if (s in mcrae_info['Synset'].tolist()) & (isinstance(s, str))
         ]
-        #print(f'Found {len(common_synsets)} common synsets', flush=True)
         things_concepts = [
             things_info.loc[things_info['Synset']==s]['Concept'].values[0]
             for s in common_synsets
@@ -88,9 +87,6 @@ def get_concepts_info(dataset_path, overwrite=False):
             'concepts_things': things_concepts, 'ids_things': things_ids, 
             'concepts_mcrae': mcrae_concepts, 'synsets': common_synsets
         })
-        # c_info['concepts_mcrae'] = c_info['concepts_mcrae'].replace(
-        #     regex=r"_.+", value=''
-        # )
         c_info.to_csv(file, index=False)
     return c_info
 
@@ -150,7 +146,7 @@ def get_synsets_ids(dataset_path):
         concepts['mcrae'].append(row['concepts_mcrae'])
         concepts['things'].append(row['concepts_things'])
         concept_imgs = [
-            d.name for d in concept_dir.iterdir() if d.suffix == '.jpg'
+            d.stem for d in concept_dir.iterdir() if d.suffix == '.jpg'
         ]
         imgs_ids[synset] = concept_imgs
     return imgs_ids, concepts

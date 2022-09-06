@@ -1,5 +1,8 @@
+from fsk.config import layers
 from fsk.dataprep.utils import get_synsets_ids
-from fsk.human_similarity.distances import get_mcrae_distances
+from fsk.human_similarity.distances import (
+    get_mcrae_distances, get_visual_net_distances
+)
 
 
 class RSA():
@@ -9,6 +12,7 @@ class RSA():
     ):
         self.project_path = project_path
         self.dataset_path = project_path / 'dataset'
+        self.results_path = project_path / 'results'
         # Get relevant information
         self.models_info = self._get_models_info(model_1, model_2)
         # Get concepts information
@@ -30,20 +34,21 @@ class RSA():
                 model_parts = model.split('_')
                 models_info[idx]['dnn'] = model_parts[0]
                 models_info[idx]['stream'] = model_parts[1]
+                models_info[idx]['layers'] = layers[model]
                 # add layers and layer index
         return models_info
 
     def get_distances(self):
-        for model in self.models_info.values():
+        dist = {0: {}, 1: {}}
+        for idx, model in self.models_info.items():
             if model['name'] == 'semantic_mcrae':
-                dist = get_mcrae_distances(
+                dist[idx] = get_mcrae_distances(
                     self.project_path, self.synsets, self.concepts['mcrae']
                 )
-            pass
-        #if self.model
-        #for synset in self.synsets:
-            
-        # TODO: compute distances for every layer (as dictionary)
-        ## probably best to compute and add?
-
-        print('done')
+            else:
+                if model['stream'] == 'img':
+                    get_visual_net_distances(
+                        self.project_path, model['dnn'], model['stream'],
+                        self.models_info[idx]['layers'], self.synsets_ids
+                    )
+        return dist

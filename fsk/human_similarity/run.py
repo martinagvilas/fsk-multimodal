@@ -7,8 +7,8 @@ from fsk.human_similarity.rsa import RSA
 def write_model_help(model):
     txt = (
         f'Select {model} to be compared with the RSA method. \
-        Can be one of: semantic, albef_visual, albef_text, albef_multimodal, \
-        clip_visual, clip_text, vilt_multimodal.'
+        Can be one of: semantic, albef_img, albef_txt, albef_multi, \
+        clip_img, clip_txt, vilt_multi.'
     )
     return txt
 
