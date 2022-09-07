@@ -1,7 +1,8 @@
 from fsk.config import layers
 from fsk.dataprep.utils import get_synsets_ids
-from fsk.human_similarity.distances import (
-    get_mcrae_distances, get_visual_net_distances
+from fsk.similarity.sem_distances import get_mcrae_distances
+from fsk.similarity.mnet_distances import (
+    get_txt_net_distances, get_img_net_distances
 )
 
 
@@ -22,7 +23,8 @@ class RSA():
         self.dist_metric_l1 = dist_l1
         self.dist_metric_l2 = dist_l2
         # Load or compute distances
-        self.dist_model_1 = self.get_distances()
+        self.dist, self.dist_labels = self.get_distances()
+        
 
     def _get_models_info(self, model_1, model_2):
         models_info = {0: {}, 1:{}}
@@ -40,15 +42,25 @@ class RSA():
 
     def get_distances(self):
         dist = {0: {}, 1: {}}
+        labels = []
         for idx, model in self.models_info.items():
             if model['name'] == 'semantic_mcrae':
-                dist[idx] = get_mcrae_distances(
+                dist[idx], m_labels = get_mcrae_distances(
                     self.project_path, self.synsets, self.concepts['mcrae']
                 )
-            else:
-                if (model['stream'] == 'img') or (model['stream'] == 'multi'):
-                    get_visual_net_distances(
-                        self.project_path, model['dnn'], model['stream'],
-                        self.models_info[idx]['layers'], self.synsets_ids
-                    )
-        return dist
+            elif (model['stream'] == 'img') or (model['stream'] == 'multi'):
+                dist[idx], m_labels = get_img_net_distances(
+                    self.project_path, model['dnn'], model['stream'],
+                    self.models_info[idx]['layers'], self.synsets_ids
+                )
+            elif model['stream'] == 'txt':
+                dist[idx], m_labels = get_txt_net_distances(
+                    self.project_path, model['dnn'],
+                    self.models_info[idx]['layers'], self.synsets_ids
+                )
+            labels.append(m_labels)
+        assert labels[0] == labels[1]
+        return dist, labels[0]
+
+    def compute_similarity(self):
+        pass

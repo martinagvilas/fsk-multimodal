@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from fsk.human_similarity.rsa import RSA
+from fsk.similarity.rsa import RSA
 
 
 def write_model_help(model):
@@ -26,4 +26,4 @@ if __name__ == '__main__':
     model_2 = parser.parse_args().m2
     project_path = Path(parser.parse_args().pp)
 
-    rsa = RSA(project_path, model_1, model_2)
+    rsa = RSA(project_path, model_1, model_2).compute_similarity()
