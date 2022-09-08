@@ -43,7 +43,7 @@ class ItmClip(ItmModel):
             torch.save(sft_match, sf_match_file)
 
     def _get_txt_ft(self, txt_type='concepts', overwrite=False):
-        out_file = self.res_paths['net_ft'] / f'out_txt_{txt_type}.pt'
+        out_file = self.res_paths['net_ft'] / f'c-out_txt_{txt_type}.pt'
         if out_file.is_file() and overwrite == False:
             txt_ft = torch.load(out_file).to(self.device)
         else:

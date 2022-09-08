@@ -90,35 +90,6 @@ def get_img_net_distances(project_path, model, stream, layers, imgs_ids):
     return (dist, labels)
 
 
-def load_distance_files(layers):
-    # Load available distance files of hidden states
-    hs = [l for l in layers if l.startswith('hs_')]
-    dist_files = [dist_path / f'{model}_{stream}_{l}.pkl' for l in hs]
-    dist = {}
-    loaded_labels = {}
-    for l, file in zip(hs, dist_files):
-        if file.is_file():
-            with open(file, 'rb') as f:
-                dist[l], loaded_labels[l] = pickle.load(f)
-    if len(dist) == len(hs):
-        hs_compute = False
-    else:
-        hs_compute = True
-    
-    # Load available distance files of contrastive head
-    if 'c_out' in layers:
-        c_out_file = dist_path / f'{model}_{stream}_c-out.pkl'
-        if c_out_file.is_file():
-            with open(c_out_file, 'rb') as f:
-                dist['c_out'], loaded_labels['c_out'] = pickle.load(f)
-            c_out_compute = False
-        else:
-            c_out_compute = True
-    else:
-        c_out_compute = False
-
-    return dist, dist_files, 
-
 
 def load_net_features(imgs_paths, file_prefix, concept_idxs=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
