@@ -103,10 +103,12 @@ def get_feature_idx_map(annot_path, features=None):
     return features_map
 
 
-def get_fsk_features(dataset_path, synsets=None):
+def get_fsk_features(dataset_path, synsets=None, filter=None):
     fsk = get_fsk(dataset_path)
     if synsets != None:
         fsk = fsk.loc[fsk['synsets'].isin(synsets)]
+    if filter != None:
+        fsk = fsk.loc[fsk['features_type'] == filter]
     features = fsk['features'].unique().tolist()
     return features
 

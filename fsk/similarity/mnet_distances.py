@@ -36,10 +36,11 @@ class MultiNetDistance():
         self.distances = {}
         labels = {}
         for l in self.layers:
+            l_name = f'{self.model}_{self.stream}-{l}'
             file = self.dist_path / f'{self.model}_{self.stream_fname}_{l}.pkl'
             if file.is_file():
                 with open(file, 'rb') as f:
-                    self.distances[l], labels[l] = pickle.load(f)
+                    self.distances[l_name], labels[l_name] = pickle.load(f)
         for l, lb in labels.items():
             assert lb == self.labels, "Loaded labels of layer {l} do not match"
 
@@ -54,14 +55,15 @@ class MultiNetDistance():
             ft = self._load_txt_features()
         
         for l, l_ft in zip(self.layers, ft):
-            if l in self.distances.keys():
+            l_name = f'{self.model}_{self.stream}-{l}'
+            if l_name in self.distances.keys():
                 continue
             else:
                 l_dist = pdist(l_ft, metric='cosine')
                 file = self.dist_path / f'{self.model}_{self.stream_fname}_{l}.pkl'
                 with open(file, 'wb') as f:
                     pickle.dump((l_dist, self.labels), f)
-                self.distances[l] = l_dist
+                self.distances[l_name] = l_dist
         assert all([d.shape == (58311,) for d in self.distances.values()])
     
     def _load_txt_features(self):

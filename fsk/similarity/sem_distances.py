@@ -9,33 +9,46 @@ from fsk.dataprep.mcrae import load_mcrae_info
 from fsk.dataprep.utils import get_fsk_features
 
 
-def get_mcrae_distances(project_path, synsets, concepts, overwrite=False):
-    dist_file = project_path / 'results/rsa/distances/mcrae.pkl'
+def get_mcrae_distances(
+    project_path, synsets, concepts, ft_type, overwrite=False
+):
+    if ft_type == None:
+        dist_file = project_path / 'results/rsa/distances/mcrae.pkl'
+    else:
+        dist_file = project_path / f'results/rsa/distances/mcrae_{ft_type}.pkl'
+
     if (dist_file.is_file()) and (overwrite == False):
         with open(dist_file, 'rb') as f:
             dist, labels = pickle.load(f)
     else:
-        sem_matrix = get_mcrae_feature_matrix(project_path, synsets, concepts)
-        dist = pdist(sem_matrix.values, metric='cosine')
-        labels = list(combinations(sem_matrix.index.tolist(), 2))
+        ft = get_mcrae_features(project_path, synsets, concepts, ft_type)
+        dist = pdist(ft.values, metric='cosine')
+        labels = list(combinations(ft.index.tolist(), 2))
         assert len(labels) == len(dist)
         with open(dist_file, 'wb') as f:
             pickle.dump((dist, labels), f)
 
-    return (dist, labels)
+    dist_dict = {'sem_mcrae': dist}
+    return (dist_dict, labels)
 
 
-def get_mcrae_feature_matrix(project_path, synsets, concepts, overwrite=False):
-    feature_matrix_file = project_path/ 'dataset/annotations/mcrae_features.csv'
-    if (feature_matrix_file.is_file()) and (overwrite == False):
-        f_matrix = pd.read_csv(feature_matrix_file, index_col=0)
+def get_mcrae_features(
+    project_path, synsets, concepts, ft_type, overwrite=False
+):
+    if ft_type == None:
+        file = project_path/ 'dataset/annotations/mcrae_features.csv'
     else:
-        # Load mcrae feature information
-        mcrae_info = load_mcrae_info(project_path/ 'dataset/annotations')
-        # Load features of interest
-        features = get_fsk_features(project_path / 'dataset')
+        file = project_path/ f'dataset/annotations/mcrae_features_{ft_type}.csv'
+    
+    if (file.is_file()) and (overwrite == False):
+        ft = pd.read_csv(file, index_col=0)
+    else:
+        # Load mcrae features information
+        dataset_path = project_path / 'dataset'
+        mcrae_info = load_mcrae_info(dataset_path/ 'annotations')
+        features = get_fsk_features(dataset_path, filter=ft_type)
         # Create feature matrix
-        f_matrix =  pd.DataFrame(
+        ft =  pd.DataFrame(
             np.zeros((len(synsets), len(features))), 
             index=synsets, columns=features
         )
@@ -47,10 +60,13 @@ def get_mcrae_feature_matrix(project_path, synsets, concepts, overwrite=False):
             )
             for _, row in c_info.iterrows():
                 feature = row['Feature']
-                f_matrix.loc[synset, feature] = row['Prod_Freq']
+                if feature in features:
+                    ft.loc[synset, feature] = row['Prod_Freq']
+        # Remove rows with all zeros
+        ft = ft.loc[~(ft==0).all(axis=1)]
         # Save
-        f_matrix.to_csv(feature_matrix_file)
-    return f_matrix
+        ft.to_csv(file)
+    return ft
 
 
 
