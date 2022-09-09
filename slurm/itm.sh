@@ -11,5 +11,5 @@
 module purge
 module load conda/4.10.1
 conda activate fsk
-cd /mnt/hpc/home/gonzalezvm/multimodal-fsk/fsk/it_match/
+cd /mnt/hpc/home/gonzalezvm/fsk-multimodal/fsk/it_match/
 srun python run.py -m albef -pp /mnt/hpc/home/gonzalezvm/fsk-multimodal/

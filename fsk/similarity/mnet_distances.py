@@ -10,7 +10,7 @@ from fsk.dataprep.utils import get_concepts
 
 
 class MultiNetDistance():
-    def __init__(self, project_path, model, stream, layers, imgs_ids):
+    def __init__(self, project_path, model, stream, layers, synset_ids):
         self.net_ft_path = project_path / 'results' / model / 'net_ft'
         self.dist_path = project_path / 'results/rsa/distances'
         
@@ -21,49 +21,74 @@ class MultiNetDistance():
             self.stream_fname = 'multi_concepts'
         else:
             self.stream_fname = self.stream
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
+        self.labels = list(combinations(list(synset_ids.keys()), 2))
+        self.synset_ids = synset_ids
 
-        self._get_distances()
-
-
-    def _get_distances(self):
+    def get_distances(self):
         self._load_distances()
-        if len(self.distances_to_compute) > 0:
+        if len(self.distances) != len(self.layers):
             self._compute_distances()
-    
+        return self.distances, self.labels
     
     def _load_distances(self):
         self.distances = {}
-        self.distances_to_compute = []
-        self.labels = {}
+        labels = {}
         for l in self.layers:
             file = self.dist_path / f'{self.model}_{self.stream_fname}_{l}.pkl'
             if file.is_file():
                 with open(file, 'rb') as f:
-                    self.distances[l], self.labels[l] = pickle.load(f)
-            else:
-                self.distances_to_compute.append(l)
+                    self.distances[l], labels[l] = pickle.load(f)
+        for l, lb in labels.items():
+            assert lb == self.labels, "Loaded labels of layer {l} do not match"
 
-    
     def _compute_distances(self):
         if self.stream == 'img':
             concept_idxs = None
+            ft = self._load_img_features(concept_idxs)
         elif self.stream == 'multi':
-            concept_idxs = get_concept_idxs(project_path)
+            concept_idxs = _get_concept_idxs(self.project_path)
+            ft = self._load_img_features(concept_idxs)
+        elif self.stream == 'txt':
+            ft = self._load_txt_features()
+        
+        for l, l_ft in zip(self.layers, ft):
+            if l in self.distances.keys():
+                continue
+            else:
+                l_dist = pdist(l_ft, metric='cosine')
+                file = self.dist_path / f'{self.model}_{self.stream_fname}_{l}.pkl'
+                with open(file, 'wb') as f:
+                    pickle.dump((l_dist, self.labels), f)
+                self.distances[l] = l_dist
+        assert all([d.shape == (58311,) for d in self.distances.values()])
+    
+    def _load_txt_features(self):
+        hs_file = self.net_ft_path / 'hs_txt_concepts.pt'
+        hs_ft = torch.load(hs_file, map_location=torch.device(self.device))
+        if self.model.startswith('clip'):
+            hs_ft = torch.flatten(
+                torch.permute(hs_ft, (2, 0, 1, 3)), start_dim=2, end_dim=3
+            )
+        ft = []
+        for _ in range(hs_ft.shape[1]):
+            l_ft = np.squeeze(hs_ft[:, 0, :])
+            hs_ft = np.delete(hs_ft, 0, axis=1) 
+            ft.append(l_ft)
+        del hs_ft
+        if 'c-out' in self.layers:
+            out_file = self.net_ft_path / 'c-out_txt_concepts.pt'
+            out_ft = torch.load(out_file, map_location=torch.device(self.device))
+            ft.append(out_ft)
+        del out_ft
+        assert len(ft) == len(self.layers)
+        return ft
     
 
 
 def get_img_net_distances(project_path, model, stream, layers, imgs_ids):
-    # Define paths
-    net_ft_path = project_path / 'results' / model / 'net_ft'
-    dist_path = project_path / 'results/rsa/distances'
 
-    # Add concept idxs to stream multimodal and change its name
-    if stream == 'img':
-        concept_idxs = None
-    elif stream == 'multi':
-        concept_idxs = get_concept_idxs(project_path)
-        stream = 'multi_concepts'
-    
     # Compute any missing features
     labels = list(combinations(list(imgs_ids.keys()), 2))
     if hs_compute == True:
@@ -114,7 +139,7 @@ def load_net_features(imgs_paths, file_prefix, concept_idxs=None):
     return avg_vals
 
 
-def get_concept_idxs(project_path):
+def _get_concept_idxs(project_path):
     concepts = get_concepts(project_path / 'dataset')
     idxs = []
     same_word = {}
@@ -134,34 +159,3 @@ def get_concept_idxs(project_path):
             idxs.append(idx[0])
     return idxs
 
-
-def _compute_distance(net_ft, layers, dist_vals, dist_files, labels):
-    for l in layers:
-        vals = np.squeeze(net_ft[:, 0, :])
-        net_ft = np.delete(net_ft, 0, axis=1)  # delete to free memory
-        if l in dist_vals.keys():
-            continue
-        else: 
-            l_dist = pdist(vals, metric='cosine')
-            l_idx = int(l.split('_')[1])
-            with open(dist_files[l_idx], 'wb') as f:
-                pickle.dump((l_dist, labels), f)
-            dist_vals[l] = l_dist
-    return dist_vals
-
-
-def get_txt_net_distances(project_path, model, layers, synsets):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    hs_file = project_path / 'results' / model / f'net_ft/hs_txt_concepts.pt'
-    
-    vals = torch.load(hs_file, map_location=torch.device(device))
-    if model.startswith('clip'):
-        vals = torch.flatten(
-            torch.permute(vals, (2, 0, 1, 3)), start_dim=2, end_dim=3
-        )
-    
-
-    # Define labels
-    labels = list(combinations(list(synsets, 2)))
-
-    return (dist, labels)
