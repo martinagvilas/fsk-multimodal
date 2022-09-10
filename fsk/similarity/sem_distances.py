@@ -12,10 +12,13 @@ from fsk.dataprep.utils import get_fsk_features
 def get_mcrae_distances(
     project_path, synsets, concepts, ft_type, overwrite=False
 ):
+    res_path = project_path / 'results/rsa/distances/'
+    res_path.mkdir(parents=True, exist_ok=True)
+
     if ft_type == None:
-        dist_file = project_path / 'results/rsa/distances/mcrae.pkl'
+        dist_file = res_path / 'mcrae.pkl'
     else:
-        dist_file = project_path / f'results/rsa/distances/mcrae_{ft_type}.pkl'
+        dist_file = res_path / f'mcrae_{ft_type}.pkl'
 
     if (dist_file.is_file()) and (overwrite == False):
         with open(dist_file, 'rb') as f:

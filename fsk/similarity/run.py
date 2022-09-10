@@ -26,11 +26,16 @@ if __name__ == '__main__':
         'function, visual_perceptual, other_perceptual.'
     )
     parser.add_argument('-ft', action='store', required=False, help=p_help)
+    ht_help = (
+        'Select hidden state type. Can be on of: concepts, definition.'
+    )
+    parser.add_argument('-ht', action='store', required=False, help=p_help)
     
     model_1 = parser.parse_args().m1
     model_2 = parser.parse_args().m2
     project_path = Path(parser.parse_args().pp)
     ft = parser.parse_args().ft
+    ht = parser.parse_args().ht
 
-    rsa = RSA(project_path, model_1, model_2, ft).compute()
+    rsa = RSA(project_path, model_1, model_2, ft, ht).compute()
     print('done')
