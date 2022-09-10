@@ -3,7 +3,10 @@ from pathlib import Path
 
 import torch
 
+from fsk.unet_features.bert import FtBert
+from fsk.unet_features.gpt import FtGPT
 from fsk.unet_features.vit import FtVit
+
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
@@ -20,3 +23,7 @@ if __name__ == '__main__':
     if model.startswith('vit'):
         version = model.split('_')[1]
         FtVit(version, project_path, device=device).compute()
+    elif model == 'bert':
+        FtBert(project_path).compute()
+    elif model == 'gpt':
+        FtGPT(project_path).compute()
