@@ -38,7 +38,9 @@ class FtVit():
 
     def compute(self):
         for _, data in tqdm(enumerate(self.dataset), total=len(self.dataset)):
-            img_ft = self.img_transform(data['img'], return_tensors="pt")
+            img_ft = self.img_transform(
+                data['img'], return_tensors="pt"
+            ).to(self.device)
             with torch.no_grad():
                 out = self.model(**img_ft)
                 hs = torch.squeeze(torch.stack(out.hidden_states)[1:])
