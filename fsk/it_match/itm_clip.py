@@ -27,22 +27,23 @@ class ItmClip(ItmModel):
         self.img_transform = img_transform
         return
 
-    def compute_match(self):
-        concepts_ft = self._get_txt_ft(txt_type='concepts')
-        features_ft = self._get_txt_ft(txt_type='sem_features')
+    def compute(self):
+        print("Computing Image-Text matching using CLIP model")
+        concepts_ft = self.get_txt_ft(txt_type='concepts')
+        features_ft = self.get_txt_ft(txt_type='sem_features')
         for _, data in tqdm(enumerate(self.dataset), total=len(self.dataset)):
             img_id = data['img_id']
             c_match_file = self.res_paths['concept_match'] / f'{img_id}.pt'
             sf_match_file = self.res_paths['feature_match'] / f'{img_id}.pt'
             if c_match_file.is_file() and sf_match_file.is_file():
                 continue
-            img_ft = self._encode_image(data['img'], img_id)
-            concept_match = self._compute_match(img_ft, concepts_ft)
+            img_ft = self.encode_image(data['img'], img_id)
+            concept_match = self.compute_match(img_ft, concepts_ft)
             torch.save(concept_match, c_match_file)
-            sft_match = self._compute_match(img_ft, features_ft)
+            sft_match = self.compute_match(img_ft, features_ft)
             torch.save(sft_match, sf_match_file)
 
-    def _get_txt_ft(self, txt_type='concepts', overwrite=False):
+    def get_txt_ft(self, txt_type='concepts', overwrite=False):
         out_file = self.res_paths['net_ft'] / f'c-out_txt_{txt_type}.pt'
         if out_file.is_file() and overwrite == False:
             txt_ft = torch.load(out_file).to(self.device)
@@ -57,6 +58,8 @@ class ItmClip(ItmModel):
                 ]
             self.model.__features__ = OrderedDict()
             tokens = clip.tokenize(txt).to(self.device)
+            # Save EOS token
+            tokens_idxs = (tokens == torch.tensor(49407)).nonzero()
             with torch.no_grad():
                 txt_ft = self.model.encode_text(tokens)
             torch.save(txt_ft, out_file)
@@ -64,12 +67,13 @@ class ItmClip(ItmModel):
             hs = []
             for l in self.layers['txt']:
                 hs.append(self.model.__features__[l])
-            hs = torch.stack(hs)
+            hs = torch.permute(torch.stack(hs), (2, 0, 1, 3))
+            hs = hs[tokens_idxs[:,0], :, tokens_idxs[:, 1], :]
             hs_file = self.res_paths['net_ft'] / f'hs_txt_{txt_type}.pt'
             torch.save(hs, hs_file)
         return txt_ft
 
-    def _encode_image(self, img, img_id):
+    def encode_image(self, img, img_id):
         img = torch.unsqueeze(self.img_transform(img), dim=0).to(self.device)
         self.model.__features__ = OrderedDict()
         with torch.no_grad():
@@ -84,15 +88,15 @@ class ItmClip(ItmModel):
             torch.save(hs, hs_file)
         return img_ft
 
-    def _compute_match(self, img_ft, txt_ft):
+    def compute_match(self, img_ft, txt_ft):
         img_ft /= img_ft.norm(dim=-1, keepdim=True)
         txt_ft /= txt_ft.norm(dim=-1, keepdim=True)
         match = torch.squeeze((img_ft @ txt_ft.T), dim=0)
         return match
 
 
-def run(project_path, device):
+def compute(project_path, device):
     print("Computing Image-Text matching using CLIP model")
     itm = ItmClip('clip', project_path, device=device)
-    itm.compute_match()
+    itm.compute()
     return 

@@ -81,7 +81,7 @@ class ItmVilt(ItmModel):
         return match
 
 
-def run(project_path, device):
+def compute(project_path, device):
     print("Computing Image-Text matching using VILT model")
     itm = ItmVilt('vilt', project_path, device=device)
     itm.compute_match()

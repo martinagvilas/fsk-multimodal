@@ -143,7 +143,7 @@ class ItmAlbef(ItmModel):
         return match
 
 
-def run(project_path, device):
+def compute(project_path, device):
     print("Computing Image-Text matching using ALBEF model")
     itm = ItmAlbef('albef', project_path, device=device)
     itm.compute_match()
