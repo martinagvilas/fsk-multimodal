@@ -6,7 +6,7 @@ from fsk.dataprep.utils import get_concepts, get_fsk_synsets
 
 
 class FtGPT():
-    def __init__(self, project_path, batch_idx=None, device='cpu'):
+    def __init__(self, project_path, device='cpu'):
         self.model_name = 'gpt'
         self.layers = {'txt': [f'h.{n}' for n in range(12)]}        
         self.device = device

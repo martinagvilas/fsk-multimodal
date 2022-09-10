@@ -6,7 +6,7 @@ from fsk.dataprep.utils import get_concepts, get_fsk_synsets
 
 
 class FtBert():
-    def __init__(self, project_path, batch_idx=None, device='cpu'):
+    def __init__(self, project_path, device='cpu'):
         self.model_name = f'bert'
         self.layers = {'txt': [f'encoder.layer.{n}' for n in range(12)]}
         self.device = device
@@ -37,18 +37,15 @@ class FtBert():
         
     def compute(self):
         for c_idx, caption_type in enumerate(['concept', 'definition']):
-            hs_cls = []
-            hs_word = []
+            hs = []
             for s_vals in self.dataset.values():
                 tokens = self.processor(
                     s_vals[c_idx], padding=True, return_tensors="pt"
                 )
                 with torch.no_grad():
                     out = self.model(**tokens)
-                hs = torch.squeeze(torch.stack(out.hidden_states))[1:]
-                hs_cls.append(torch.squeeze(hs[:, 0, :]))
-                hs_word.append(torch.squeeze(hs[:, 1, :]))
-            hs_cls_file = self.res_path / f'hs_txt_{caption_type}.pt'
-            torch.save(torch.stack(hs_cls), hs_cls_file)
-            hs_word_file = self.res_path / f'hs_txt_{caption_type}.pt'
-            torch.save(torch.stack(hs_word), hs_word_file)
+                s_hs = torch.squeeze(torch.stack(out.hidden_states))[1:]
+                # Use CLS token as ALBEF and VILT
+                hs.append(torch.squeeze(s_hs[:, 0, :]))
+            hs_file = self.res_path / f'hs_txt_{caption_type}.pt'
+            torch.save(torch.stack(hs), hs_file)
