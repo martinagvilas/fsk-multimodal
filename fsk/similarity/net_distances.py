@@ -10,6 +10,7 @@ from fsk.dataprep.utils import get_concepts
 
 class NetDistances():
     def __init__(self, project_path, model, stream, layers, hs_type, synset_ids):
+        self.dataset_path = project_path / 'dataset'
         self.net_ft_path = project_path / 'results' / model / 'net_ft'
         self.dist_path = project_path / 'results/rsa/distances'
         
@@ -25,6 +26,21 @@ class NetDistances():
         
         self.labels = list(combinations(list(synset_ids.keys()), 2))
         self.synset_ids = synset_ids
+        self.concept_idxs = self.get_concept_idxs()
+
+    def get_concept_idxs(self):
+        concepts = get_concepts(self.dataset_path)
+        synsets = list(self.synset_ids.keys())
+        c_idxs = {}
+        found_c = []
+        for s, c in zip(synsets, concepts):
+            c_count = concepts.count(c)
+            if (c_count == 2) & (c in found_c):
+                c_idxs[s] = 1
+            else:
+                c_idxs[s] = 0
+            found_c.append(c)
+        return c_idxs
 
     def get_distances(self):
         self.load_distances()
@@ -45,12 +61,8 @@ class NetDistances():
             assert lb == self.labels, "Loaded labels of layer {l} do not match"
 
     def compute_distances(self):
-        if self.stream == 'img':
-            concept_idxs = None
-            ft = self.load_img_features(concept_idxs)
-        elif self.stream == 'multi':
-            concept_idxs = self.get_concept_idxs(self.project_path)
-            ft = self.load_img_features(concept_idxs)
+        if (self.stream == 'img') or (self.stream == 'multi'):
+            ft = self.load_img_features()
         elif self.stream == 'txt':
             ft = self.load_txt_features()
         
@@ -66,24 +78,43 @@ class NetDistances():
                 self.distances[l_name] = l_dist
         assert all([d.shape == (58311,) for d in self.distances.values()])
     
-    def load_img_features(self, concept_idxs):
-        avg_vals = []
-        for s, s_imgs in enumerate(self.synset_ids):
-            s_vals = []
-            for img in s_imgs:
-                img_f = f'{file_prefix}_{img}.pt'
-                img_ft = torch.load(
-                    img_f, map_location=torch.device(self.device)
-                )
-                if concept_idxs != None:
-                    img_ft = img_ft[concept_idxs[s_idx]]
-                s_vals.append(img_ft)
-            avg_vals.append(torch.mean(torch.stack(s_vals), dim=0))
-        avg_vals = torch.stack(avg_vals)
-        if len(avg_vals.shape) >= 4:
-            avg_vals = torch.flatten(avg_vals, start_dim=2, end_dim=-1)
-        avg_vals = avg_vals.detach().numpy()
+    def load_img_features(self):
+        hs_ft = []
+        for s, s_imgs in self.synset_ids.items():
+            hs_ft.append(self.load_synset_img_features(s, s_imgs, 'hs'))
+        hs_ft = torch.stack(hs_ft)
+        ft = []
+        for _ in range(hs_ft.shape[1]):
+            l_ft = np.squeeze(hs_ft[:, 0, :])
+            hs_ft = np.delete(hs_ft, 0, axis=1) 
+            ft.append(l_ft.detach().numpy())
+        del hs_ft
+        if 'c-out' in self.layers:
+            c_ft = []
+            for s_imgs in self.synset_ids.values():
+                c_ft.append(self.load_synset_img_features(s, s_imgs, 'c-out'))
+            c_ft = torch.stack(c_ft)
+            ft.append(c_ft.detach().numpy())
+            del c_ft
+        assert len(ft) == len(self.layers)
         return ft
+    
+    def load_synset_img_features(self, synset, s_imgs, layer_type):
+        s_ft = []
+        for img_id in s_imgs:
+            img_ft = torch.load(
+                (self.net_ft_path / f'{layer_type}_{self.ftype}_{img_id}.pt'), 
+                map_location=torch.device(self.device)
+            )
+            if self.stream == 'multi':
+                img_ft = img_ft[self.concept_idxs[synset], :, :]
+            else:
+                img_ft = torch.squeeze(img_ft)
+                if layer_type == 'hs':
+                    img_ft = torch.flatten(img_ft, start_dim=-2, end_dim=-1)
+            s_ft.append(img_ft)
+        s_ft = torch.mean(torch.stack(s_ft), dim=0)
+        return s_ft
 
     def load_txt_features(self):
         hs_file = self.net_ft_path / f'hs_{self.ftype}.pt'
@@ -92,34 +123,13 @@ class NetDistances():
         for _ in range(hs_ft.shape[1]):
             l_ft = np.squeeze(hs_ft[:, 0, :])
             hs_ft = np.delete(hs_ft, 0, axis=1) 
-            ft.append(l_ft)
+            ft.append(l_ft.detach().numpy())
         del hs_ft
         if 'c-out' in self.layers:
             out_file = self.net_ft_path / f'c-out_{self.ftype}.pt'
             out_ft = torch.load(out_file, map_location=torch.device(self.device))
-            ft.append(out_ft)
+            ft.append(out_ft.detach().numpy())
             del out_ft
         assert len(ft) == len(self.layers)
         return ft
-
-
-def _get_concept_idxs(project_path):
-    concepts = get_concepts(project_path / 'dataset')
-    idxs = []
-    same_word = {}
-    for c1 in concepts:
-        shared_word = []
-        for c2 in concepts:
-            if c2 in c1:
-                shared_word.append(c2)
-        idx = [i for i, w in enumerate(shared_word) if w == c1]
-        if (len(idx) > 1) & (c1 in same_word.keys()):
-            idxs.append(idx[same_word[c1]])
-            same_word[c1] += 1
-        elif (len(idx) > 1) & (c1 not in same_word.keys()):
-            idxs.append(idx[0])
-            same_word[c1] = 1
-        else:
-            idxs.append(idx[0])
-    return idxs
 

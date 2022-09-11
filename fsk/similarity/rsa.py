@@ -18,11 +18,12 @@ class RSA():
         self.dataset_path = project_path / 'dataset'
         self.results_path = project_path / 'results'
         
+        self.feature_type = feature_type
+        self.hs_type = hs_type
+        
         self.models_info = self.get_models_info(model_1, model_2)
         self.synsets_ids, self.concepts = get_synsets_ids(self.dataset_path)
         self.synsets = list(self.synsets_ids.keys())
-        self.feature_type = feature_type
-        self.hs_type = hs_type
 
     def get_models_info(self, model_1, model_2):
         models_info = {0: {}, 1:{}}
@@ -32,7 +33,7 @@ class RSA():
             else:
                 models_info[idx]['name'] = model
                 if model.startswith('vit'):                    
-                    models_info[idx]['dnn'] = 'vit'
+                    models_info[idx]['dnn'] = model
                     models_info[idx]['stream'] = 'img'
                 elif (model == 'gpt') or (model == 'bert'):
                     models_info[idx]['dnn'] = model
