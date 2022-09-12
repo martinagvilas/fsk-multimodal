@@ -11,15 +11,13 @@ from fsk.similarity.net_distances import NetDistances
 
 
 class RSA():
-    def __init__(
-        self, project_path, model_1, model_2, feature_type=None, hs_type=None
-    ):
+    def __init__(self, project_path, model_1, model_2, feature_type=None):
         self.project_path = project_path
         self.dataset_path = project_path / 'dataset'
         self.results_path = project_path / 'results'
         
         self.feature_type = feature_type
-        self.hs_type = hs_type
+        self.hs_type = None
         
         self.models_info = self.get_models_info(model_1, model_2)
         self.synsets_ids, self.concepts = get_synsets_ids(self.dataset_path)
@@ -35,15 +33,18 @@ class RSA():
                 if model.startswith('vit'):                    
                     models_info[idx]['dnn'] = model
                     models_info[idx]['stream'] = 'img'
-                elif (model == 'gpt') or (model == 'bert'):
-                    models_info[idx]['dnn'] = model
+                elif (model.startswith('gpt')) or (model.startswith('bert')):
+                    model_parts = model.split('_')
+                    models_info[idx]['dnn'] = model_parts[0]
                     models_info[idx]['stream'] = 'txt'
+                    self.hs_type = model_parts[1]
                 else:
                     model_parts = model.split('_')
                     models_info[idx]['dnn'] = model_parts[0]
                     models_info[idx]['stream'] = model_parts[1]
-                if models_info[idx]['stream'] == 'multi':
-                    self.hs_type = 'concepts'
+                    if (models_info[idx]['stream'] == 'multi') or \
+                        (models_info[idx]['stream'] == 'txt'):
+                        self.hs_type = 'concepts'
                 models_info[idx]['layers'] = layers[model]
         return models_info
 
@@ -91,16 +92,14 @@ class RSA():
             self.rsa_vals.append([l1, l2, corr_coef, np.round(p_val, 3)])
         
         # Save and return
-        file_ext = ''
-        if self.hs_type != None:
-            file_ext = f'{file_ext}_{self.hs_type}'
         if self.feature_type != None:
-            file_ext = f'{file_ext}_{self.feature_type}'
+            file_ext = f'_{self.feature_type}'
+        else:
+            file_ext = ''
         file = (
             f"{self.models_info[0]['name']}_{self.models_info[1]['name']}"\
             f"{file_ext}.pkl"
-            )
-
+        )
         with open((self.results_path / 'rsa' / file), 'wb') as f:
             pickle.dump(self.rsa_vals, f)
         return self.rsa_vals

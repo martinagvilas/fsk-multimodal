@@ -108,10 +108,11 @@ class NetDistances():
             )
             if self.stream == 'multi':
                 img_ft = img_ft[self.concept_idxs[synset], :, :]
+            elif (self.stream == 'img') & (layer_type == 'hs'):
+                # Only select CLS representation
+                img_ft = img_ft[:, 0, :]
             else:
                 img_ft = torch.squeeze(img_ft)
-                if layer_type == 'hs':
-                    img_ft = torch.flatten(img_ft, start_dim=-2, end_dim=-1)
             s_ft.append(img_ft)
         s_ft = torch.mean(torch.stack(s_ft), dim=0)
         return s_ft

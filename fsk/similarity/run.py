@@ -4,6 +4,17 @@ from pathlib import Path
 from fsk.similarity.rsa import RSA
 
 
+MODELS = [
+    'clip_txt', 'clip_img', 'albef_txt', 'albef_img', 'albef_multi',
+    'vilt_multi', 'gpt_concepts', 'gpt_definition', 'bert_concepts',
+    'bert_definition', 'vit_16', 'vit_32'
+]
+FEATURES = [
+    None, 'taxonomic', 'function', 'encyclopaedic', 'visual_perceptual', 
+    'other_perceptual'
+]
+
+
 def write_model_help(model):
     txt = (
         f'Select {model} to be compared with the RSA method. \
@@ -26,16 +37,21 @@ if __name__ == '__main__':
         'function, visual_perceptual, other_perceptual.'
     )
     parser.add_argument('-ft', action='store', required=False, help=p_help)
-    ht_help = (
-        'Select hidden state type. Can be on of: concepts, definition.'
-    )
-    parser.add_argument('-ht', action='store', required=False, help=p_help)
     
     model_1 = parser.parse_args().m1
     model_2 = parser.parse_args().m2
     project_path = Path(parser.parse_args().pp)
     ft = parser.parse_args().ft
-    ht = parser.parse_args().ht
 
-    rsa = RSA(project_path, model_1, model_2, ft, ht).compute()
-    print('done')
+    if (model_1 == 'sem') and (model_2 == 'all'):
+        for m2 in MODELS:
+            for f in FEATURES:
+                RSA(project_path, model_1, m2, f).compute()
+                print(f'Done comparing {f} similarity of {model_1} and {m2}')
+    elif ft == 'all':
+        for f in FEATURES:
+            RSA(project_path, model_1, model_2, f).compute()
+            print(f'Done comparing {f} similarity of {model_1} and {model_2}')
+    else:
+        RSA(project_path, model_1, model_2, ft).compute()
+        print(f'Done comparing {ft} similarity of {model_1} and {model_2}')
