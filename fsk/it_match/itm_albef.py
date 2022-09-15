@@ -143,8 +143,8 @@ class ItmAlbef(ItmModel):
         return match
 
 
-def compute(project_path, device):
+def compute(project_path, device, batch_idx=None):
     print("Computing Image-Text matching using ALBEF model")
-    itm = ItmAlbef('albef_c', project_path, device=device)
+    itm = ItmAlbef('albef_c', project_path, batch_idx=batch_idx, device=device)
     itm.compute_match()
     return
