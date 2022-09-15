@@ -148,7 +148,8 @@ class ALBEF(nn.Module):
                                            output_hidden_states=True,
                                            mode='fusion')
                 score = self.itm_head(output.last_hidden_state[:, 0, :])
-                all_scores.append(torch.softmax(score, dim=-1)[:, 1])
+                all_scores.append(score[:, 1])
+                #all_scores.append(torch.softmax(score, dim=-1)[:, 1])
             multi_hidden_states = torch.stack(output.hidden_states)
             score = torch.stack(all_scores)
         else:
