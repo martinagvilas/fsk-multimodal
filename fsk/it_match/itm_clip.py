@@ -83,7 +83,7 @@ class ItmClip(ItmModel):
             hs = []
             for l in self.layers['img']:
                 hs.append(self.model.__features__[l])
-            hs = torch.stack(hs)
+            hs = torch.squeeze(torch.stack(hs)[:, 0, :, :])
             hs_file = self.res_paths['net_ft'] / f'hs_img_{img_id}.pt'
             torch.save(hs, hs_file)
         return img_ft
@@ -95,8 +95,8 @@ class ItmClip(ItmModel):
         return match
 
 
-def compute(project_path, device):
+def compute(project_path, device, batch_idx=None):
     print("Computing Image-Text matching using CLIP model")
-    itm = ItmClip('clip', project_path, device=device)
+    itm = ItmClip('clip', project_path, batch_idx=batch_idx, device=device)
     itm.compute()
     return 

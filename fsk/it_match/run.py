@@ -20,12 +20,12 @@ if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if model == 'all':
-        itm_clip.compute(project_path, device)
-        itm_vilt.compute(project_path, device)
+        itm_clip.compute(project_path, device, batch_idx)
+        itm_vilt.compute(project_path, device, batch_idx)
         itm_albef.compute(project_path, device, batch_idx)
     elif model == 'clip':
-        itm_clip.compute(project_path, device)
+        itm_clip.compute(project_path, device, batch_idx)
     elif model == 'vilt':
-        itm_vilt.compute(project_path, device)
+        itm_vilt.compute(project_path, device, batch_idx)
     elif model == 'albef':
         itm_albef.compute(project_path, device, batch_idx)

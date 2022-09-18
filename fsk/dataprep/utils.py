@@ -113,12 +113,6 @@ def get_fsk_features(dataset_path, synsets=None, filter=None):
     return features
 
 
-def get_fsk_synsets(dataset_path):
-    fsk = get_fsk(dataset_path)
-    synsets = fsk['synsets'].unique().tolist()
-    return synsets
-
-
 def get_concepts(dataset_path, source='things'):
     """Get list of shared shared concepts in the Things and McRae dataset.
 

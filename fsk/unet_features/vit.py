@@ -43,7 +43,7 @@ class FtVit():
             ).to(self.device)
             with torch.no_grad():
                 out = self.model(**img_ft)
-                hs = torch.squeeze(torch.stack(out.hidden_states)[1:])
+                hs = torch.squeeze(torch.stack(out.hidden_states)[1:, :, 0, :])
                 hs_file = self.res_path / f"hs_img_{data['img_id']}.pt"
                 torch.save(hs, hs_file)
 

@@ -31,8 +31,7 @@ def get_mcrae_distances(
         with open(dist_file, 'wb') as f:
             pickle.dump((dist, labels), f)
 
-    dist_dict = {'sem_mcrae': dist}
-    return (dist_dict, labels)
+    return (dist, labels)
 
 
 def get_mcrae_features(

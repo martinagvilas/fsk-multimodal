@@ -1,11 +1,11 @@
 from itertools import combinations
 import pickle
 
-import numpy as  np
 from scipy.spatial.distance import pdist
 import torch
 
 from fsk.dataprep.utils import get_concepts
+from fsk.it_match.load import load_img_net_ft, load_multi_net_ft, load_txt_net_ft
 
 
 class NetDistances():
@@ -46,25 +46,27 @@ class NetDistances():
         self.load_distances()
         if len(self.distances) != len(self.layers):
             self.compute_distances()
-        return self.distances, self.labels
+        return self.distances, self.dist_labels
     
     def load_distances(self):
         self.distances = {}
-        labels = {}
+        self.dist_labels = {}
         for l in self.layers:
             l_name = f'{self.model}_{self.ftype}-{l}'
             file = self.dist_path / f'{self.model}_{self.ftype}_{l}.pkl'
             if file.is_file():
                 with open(file, 'rb') as f:
-                    self.distances[l_name], labels[l_name] = pickle.load(f)
-        for l, lb in labels.items():
-            assert lb == self.labels, "Loaded labels of layer {l} do not match"
+                    self.distances[l_name], self.dist_labels[l_name] = pickle.load(f)
+        # for l, lb in labels.items():
+        #     assert lb == self.labels, "Loaded labels of layer {l} do not match"
 
     def compute_distances(self):
-        if (self.stream == 'img') or (self.stream == 'multi'):
+        if self.stream == 'img':
             ft = self.load_img_features()
         elif self.stream == 'txt':
             ft = self.load_txt_features()
+        elif self.stream == 'multi':
+            ft = self.load_multi_features()
         
         for l, l_ft in zip(self.layers, ft):
             l_name = f'{self.model}_{self.stream}-{l}'
@@ -76,61 +78,32 @@ class NetDistances():
                 with open(file, 'wb') as f:
                     pickle.dump((l_dist, self.labels), f)
                 self.distances[l_name] = l_dist
+                self.dist_labels[l_name] = self.labels
         assert all([d.shape == (58311,) for d in self.distances.values()])
     
     def load_img_features(self):
-        hs_ft = []
-        for s, s_imgs in self.synset_ids.items():
-            hs_ft.append(self.load_synset_img_features(s, s_imgs, 'hs'))
-        hs_ft = torch.stack(hs_ft)
         ft = []
-        for _ in range(hs_ft.shape[1]):
-            l_ft = np.squeeze(hs_ft[:, 0, :])
-            hs_ft = np.delete(hs_ft, 0, axis=1) 
-            ft.append(l_ft.detach().numpy())
-        del hs_ft
-        if 'c-out' in self.layers:
-            c_ft = []
-            for s_imgs in self.synset_ids.values():
-                c_ft.append(self.load_synset_img_features(s, s_imgs, 'c-out'))
-            c_ft = torch.stack(c_ft)
-            ft.append(c_ft.detach().numpy())
-            del c_ft
-        assert len(ft) == len(self.layers)
-        return ft
-    
-    def load_synset_img_features(self, synset, s_imgs, layer_type):
-        s_ft = []
-        for img_id in s_imgs:
-            img_ft = torch.load(
-                (self.net_ft_path / f'{layer_type}_{self.ftype}_{img_id}.pt'), 
-                map_location=torch.device(self.device)
+        for l_idx, l in enumerate(self.layers):
+            i_ft, _ = load_img_net_ft(
+                self.net_ft_path, l, l_idx, self.synset_ids, avg=True
             )
-            if self.stream == 'multi':
-                img_ft = img_ft[self.concept_idxs[synset], :, :]
-            elif (self.stream == 'img') & (layer_type == 'hs'):
-                # Only select CLS representation
-                img_ft = img_ft[:, 0, :]
-            else:
-                img_ft = torch.squeeze(img_ft)
-            s_ft.append(img_ft)
-        s_ft = torch.mean(torch.stack(s_ft), dim=0)
-        return s_ft
+            ft.append(i_ft)
+        return ft
 
     def load_txt_features(self):
-        hs_file = self.net_ft_path / f'hs_{self.ftype}.pt'
-        hs_ft = torch.load(hs_file, map_location=torch.device(self.device))
         ft = []
-        for _ in range(hs_ft.shape[1]):
-            l_ft = np.squeeze(hs_ft[:, 0, :])
-            hs_ft = np.delete(hs_ft, 0, axis=1) 
-            ft.append(l_ft.detach().numpy())
-        del hs_ft
-        if 'c-out' in self.layers:
-            out_file = self.net_ft_path / f'c-out_{self.ftype}.pt'
-            out_ft = torch.load(out_file, map_location=torch.device(self.device))
-            ft.append(out_ft.detach().numpy())
-            del out_ft
-        assert len(ft) == len(self.layers)
+        for l_idx, l in enumerate(self.layers):
+            ft.append(load_txt_net_ft(
+                self.net_ft_path, l, l_idx, hs_type='concept')
+            )
         return ft
 
+    def load_multi_features(self):
+        ft = []
+        for l_idx, l in enumerate(self.layers):
+            i_ft, _ = load_multi_net_ft(
+                self.net_ft_path, l, l_idx, self.synset_ids, avg=True, 
+                hs_type='concept'
+            )
+            ft.append(i_ft)
+        return ft

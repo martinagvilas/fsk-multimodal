@@ -4,14 +4,26 @@ from pathlib import Path
 from fsk.similarity.rsa import RSA
 
 
-MODELS = [
-    'clip_txt', 'clip_img', 'albef_txt', 'albef_img', 'albef_multi',
-    'vilt_multi', 'gpt_concepts', 'gpt_definition', 'bert_concepts',
-    'bert_definition', 'vit_16', 'vit_32'
-]
-FEATURES = [
-    None, 'taxonomic', 'function', 'encyclopaedic', 'visual_perceptual', 
-    'other_perceptual'
+COMPARISONS = [
+    # Compare predictions
+    ['clip', 'sem', 'clip'], ['clip', 'gpt', 'clip'], ['clip', 'vit_32', 'clip'],
+    ['albef', 'sem', 'albef'], ['albef', 'bert', 'albef'], 
+    ['albef', 'vit_16', 'albef'], ['vilt', 'sem', 'vilt'], 
+    ['vilt', 'bert', 'vilt'], ['vilt', 'vit_32', 'vilt'],
+    # Compare different streams 
+    ['clip_img', 'clip_txt', None],
+    ['albef_img', 'albef_txt', None], ['albef_img', 'albef_multi', None], 
+    ['albef_txt', 'albef_multi', None],
+    # Compare multimodal with sem
+    ['clip_txt', 'sem', None], ['clip_img', 'sem', None],
+    ['albef_txt', 'sem', None], ['albef_img', 'sem', None],
+    ['albef_multi', 'sem', None], 
+    ['vilt_multi', 'sem', None],
+    # Compare multimodal with unimodal
+    ['clip_txt', 'gpt', None], ['clip_img', 'vit_32', None],
+    ['albef_txt', 'bert', None], ['albef_img', 'vit_16', None],
+    ['albef_multi', 'bert', None], ['albef_multi', 'vit_16', None], 
+    ['vilt_multi', 'bert', None], ['vilt_multi', 'vit_32', None]
 ]
 
 
@@ -26,32 +38,26 @@ def write_model_help(model):
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
+    parser.add_argument('-all', action='store_true', required=False)
+    parser.add_argument('-bi', action='store', required=False)
     m1_help = write_model_help('first model')
-    parser.add_argument('-m1', action='store', required=True, help=m1_help)
+    parser.add_argument('-m1', action='store', required=False, help=m1_help)
     m2_help = write_model_help('second model')
-    parser.add_argument('-m2', action='store', required=True, help=m2_help)
+    parser.add_argument('-m2', action='store', required=False, help=m2_help)
     p_help = 'Path to the project folder containing the dataset and source code'
-    parser.add_argument('-pp', action='store', required=True, help=p_help)
-    ft_help = (
-        'Select feature type. Can be on of: taxonomic, encyclopaedic, '
-        'function, visual_perceptual, other_perceptual.'
-    )
-    parser.add_argument('-ft', action='store', required=False, help=p_help)
+    parser.add_argument('-pp', action='store', required=False, help=p_help)
+    dm_help = ('Select a model to compute relative to predictions')
+    parser.add_argument('-dm', action='store', required=False, help=dm_help)
+    parser.add_argument('-pt', action='store', required=False, help=dm_help)
     
     model_1 = parser.parse_args().m1
     model_2 = parser.parse_args().m2
     project_path = Path(parser.parse_args().pp)
-    ft = parser.parse_args().ft
+    decision_model = parser.parse_args().dm
+    run_all = parser.parse_args().all
+    batch_idx = int(parser.parse_args().bi)
+    pred_type = parser.parse_args().pt
 
-    if (model_1 == 'sem') and (model_2 == 'all'):
-        for m2 in MODELS:
-            for f in FEATURES:
-                RSA(project_path, model_1, m2, f).compute()
-                print(f'Done comparing {f} similarity of {model_1} and {m2}')
-    elif ft == 'all':
-        for f in FEATURES:
-            RSA(project_path, model_1, model_2, f).compute()
-            print(f'Done comparing {f} similarity of {model_1} and {model_2}')
-    else:
-        RSA(project_path, model_1, model_2, ft).compute()
-        print(f'Done comparing {ft} similarity of {model_1} and {model_2}')
+    if run_all:
+        model_1, model_2, decision_model = COMPARISONS[batch_idx]
+    RSA(project_path, model_1, model_2, decision_model, pred_type).compute()

@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 from scipy.stats import spearmanr
+from sklearn.feature_selection import mutual_info_regression
 
 from fsk.config import feature_types, layers, uni_models
 from fsk.dataprep.utils import get_synsets_ids
@@ -17,6 +18,7 @@ class RSA():
         self.dataset_path = project_path / 'dataset'
         self.net_path = project_path / 'results' / model
         self.rsa_path = project_path / 'results/rsa/concept_pred/'
+        self.rsa_path.mkdir(parents=True, exist_ok=True)
         
         self.synsets_ids, self.concepts = get_synsets_ids(self.dataset_path)
         self.synsets = list(self.synsets_ids.keys())
@@ -71,9 +73,13 @@ class RSA():
             rsa_val = []
             for um_l in um_data.keys():
                 corr, p_val = spearmanr(
-                    mm_data, um_data[um_l], nan_policy='omit'
+                    mm_data, 1- um_data[um_l], nan_policy='omit'
                 )
-                print(f'corr of {self.model} and {um_l} is {corr}')
+                print(
+                    f'corr of {self.model} and {um_l} is {np.round(corr, 4)}'\
+                    f'and pval of {np.round(p_val, 4)}'
+                )
+                #print(mutual_info_regression(um_data[um_l].reshape(-1,1), mm_data))
                 rsa_val.append([self.model, um_l, corr, np.round(p_val, 3)])
             self.rsa_vals.append(rsa_val)
             

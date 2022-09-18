@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=itm
+#SBATCH --job-name=uni
 #SBATCH --begin=now
 #SBATCH --partition=GPUtest
 #SBATCH --gpus=1

@@ -71,18 +71,18 @@ class ItmVilt(ItmModel):
                 )
             match.append(out.logits)
             # Get multimodal stream hidden states
-            if t in data[info_key]:
-                hs = torch.stack(out.hidden_states)[1:, :, 0, :]
-                multi_hs.append(torch.squeeze(hs))
+            hs = torch.stack(out.hidden_states)[1:, :, 0, :]
+            multi_hs.append(torch.squeeze(hs))
         # Save multimodal hidden states
         torch.save(torch.stack(multi_hs), multi_hs_file)
+        del multi_hs
         # Return match values
         match = torch.squeeze(torch.stack(match))
         return match
 
 
-def compute(project_path, device):
+def compute(project_path, device, batch_idx=None):
     print("Computing Image-Text matching using VILT model")
-    itm = ItmVilt('vilt', project_path, device=device)
+    itm = ItmVilt('vilt', project_path, batch_idx=batch_idx, device=device)
     itm.compute_match()
     return 

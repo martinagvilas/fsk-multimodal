@@ -122,7 +122,8 @@ class ItmAlbef(ItmModel):
                 img_hs = []
                 for l in self.layers['img']:
                     img_hs.append(self.model.__features__[l])
-                torch.save(torch.squeeze(torch.stack(img_hs)), img_hs_file)
+                img_hs = torch.stack(img_hs)[:, :, 0, :]
+                torch.save(torch.squeeze(img_hs), img_hs_file)
                 torch.save(torch.squeeze(out['c_out']['img']), img_c_out_file)
             # Get text stream hidden states and contrastive projections 
             # if file doesn't exist
@@ -130,8 +131,7 @@ class ItmAlbef(ItmModel):
                 txt_hs.append(torch.squeeze(out['hs']['txt'][:, :, 0, :]))
                 txt_c_out.append(torch.squeeze(out['c_out']['txt']))
             # Get multimodal stream hidden states
-            if t in data[info_key]:
-                multi_hs.append(torch.squeeze(out['hs']['multi'][:, :, 0, :]))
+            multi_hs.append(torch.squeeze(out['hs']['multi'][:, :, 0, :]))
         # Save text hidden states and contrastive projections
         if compute_txt_hs == True:
             torch.save(torch.stack(txt_hs), txt_hs_file)
