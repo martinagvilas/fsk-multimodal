@@ -6,7 +6,8 @@ import torch
 
 
 def get_match(
-    res_path, model, synsets_imgs, center=True, m_type='concept', avg=False
+    res_path, model, synsets_imgs, center=True, m_type='concept', avg=False, 
+    return_np=True
 ):
     match = []
     labels = []
@@ -26,34 +27,22 @@ def get_match(
         if avg == True:
             s_match = [torch.mean(torch.stack(s_match), dim=0)]
         match = match + s_match
-    match = torch.stack(match).detach().numpy()
+    match = torch.stack(match)
     if center == True:
-        match = (match - np.mean(match)) / np.std(match)
+        match = (match - torch.mean(match)) / torch.std(match)
+    if return_np == True:
+        match = match.detach().numpy()
     return match, labels
-
-
-# def get_concept_match_accuracy(c_match_path, synsets, s_idxs, top_k):
-#     m_preds = []
-#     for s, s_imgs in s_idxs.items():
-#         correct_val = synsets.index(s)
-#         for img in s_imgs:
-#             val = [s, img]
-#             i_pred = torch.load(
-#                 c_match_path / f'{img}.pt', map_location=torch.device('cpu')
-#             )
-#             top_indices = i_pred.topk(15)[1]
-#             val.append([synsets[i] for i in top_indices])
-#             for t in top_k:
-#                 val.append(correct_val in top_indices[:t])
-#             m_preds.append(val)
-
+    
 
 def get_concept_match_distance(
-    res_path, model, synsets_imgs, center=True, from_preds=True
+    res_path, model, synsets_imgs, center=True, img_to_txt=True, from_preds=True
 ):
     match, labels = get_match(
         res_path, model, synsets_imgs, center=center, avg=True
     )
+    if img_to_txt == False:
+        match = match.T
     if from_preds == True:
         dist = match[np.triu_indices_from(match, k=1)]
         dist_labels = list(combinations(labels, 2))
@@ -92,6 +81,7 @@ def load_img_net_ft(net_ft_path, layer, l_idx, synsets_imgs, avg=False):
             if layer != 'c-out':
                 i_ft = i_ft[l_idx]
             f_ft.append(i_ft)
+            del i_ft
         if avg == True:
             f_ft = [torch.mean(torch.stack(f_ft), dim=0)]
         ft = ft + f_ft
@@ -139,6 +129,7 @@ def load_multi_net_ft(
             if select_idx == True:
                 i_ft = i_ft[sel_idx]
             f_ft.append(i_ft)
+            del i_ft
         if avg == True:
             f_ft = [torch.mean(torch.stack(f_ft), dim=0)]
         ft = ft + f_ft

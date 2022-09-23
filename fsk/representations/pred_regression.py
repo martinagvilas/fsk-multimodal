@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 from sklearn.feature_selection import mutual_info_regression
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold, train_test_split
 
 from fsk.config import layers, multi_models
@@ -39,6 +39,7 @@ def compute(project_path, model, stream, layer,  txt_type):
     elif stream == 'multi':
         X, X_labels = load_multi_net_ft(net_ft_path, layer, l_idx, synsets_imgs)
         assert preds_labels == X_labels
+    print('Loaded X', flush=True)
 
     for f_idx in range(preds.shape[1]):
         res = {}
@@ -49,19 +50,19 @@ def compute(project_path, model, stream, layer,  txt_type):
         X_train, X_test, y_train, y_test = train_test_split(X, preds[:, f_idx])
         reg = Ridge()
         reg.fit(X_train, y_train)
-        true_score = mean_squared_error(y_test, reg.predict(X_test))
+        true_score = r2_score(y_test, reg.predict(X_test))
 
-        random_scores = []
-        for _ in range(100):
-            np.random.shuffle(y_train)
-            reg.fit(X_train, y_train)
-            random_scores.append(mean_squared_error(y_test, reg.predict(X_test)))
+        # random_scores = []
+        # for _ in range(100):
+        #     np.random.shuffle(y_train)
+        #     reg.fit(X_train, y_train)
+        #     random_scores.append(mean_squared_error(y_test, reg.predict(X_test)))
 
-        pval = np.sum(random_scores < true_score) / 100
+        # pval = np.sum(random_scores < true_score) / 100
 
         res['preds'] = reg.predict(X)
-        res['mse'] = true_score
-        res['pval'] = pval
+        res['r2'] = true_score
+        #res['pval'] = pval
         res['coefs'] = reg.coef_
         res['intercept'] = reg.intercept_
 
@@ -90,8 +91,8 @@ def compute(project_path, model, stream, layer,  txt_type):
         # res['mutual_information'] = mi
 
         print(
-            f'feature {features[f_idx]}, {model} {stream} {layer} mse: '\
-            f'{res["mse"]}, pval {pval}'
+            f'feature {features[f_idx]}, {model} {stream} {layer} score: '\
+            f'{res["r2"]}'
         )
         
         res_file = preds_path / f'{model}_{stream}_{layer}_{txt_type}_{f_idx}.pkl'

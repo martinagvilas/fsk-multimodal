@@ -6,6 +6,7 @@ scikit-learn
 seaborn
 
 datasets
+gensim
 nltk == 3.6.7
 timm == 0.4.9
 tqdm
