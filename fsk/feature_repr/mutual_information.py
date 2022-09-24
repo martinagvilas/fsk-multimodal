@@ -1,18 +1,18 @@
 import argparse
 from pathlib import Path
 
-from scipy.stats import entropy
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import mutual_info_regression
 import pandas as pd
 
 from fsk.dataprep.utils import get_fsk_features, get_synsets_ids
 from fsk.it_match.load import get_match
 
 
-def compute_KLD(project_path, model):
+def compute_mutual_information(project_path, model):
     res_path = project_path / 'results'
-    kld_path = res_path / 'kld'
-    res_path.mkdir(parents=True, exist_ok=True)
+    mi_path = res_path / 'mutual_info'
+    mi_path.mkdir(parents=True, exist_ok=True)
     
     synsets_imgs, _ = get_synsets_ids(project_path / 'dataset')
     synsets = list(synsets_imgs.keys())
@@ -25,20 +25,14 @@ def compute_KLD(project_path, model):
     )
     ft_match = MinMaxScaler(feature_range=(0.00001, 1)).fit_transform(ft_match)
     
-    ecf = []
-    efc = []
+    mi = []
     for c in range(c_match.shape[1]):
-        for f in range(ft_match.shape[1]):
-            ecf.append([synsets[c], fsk_ft[f], entropy(c_match[:,c], ft_match[:,f])])
-            efc.append([fsk_ft[f], synsets[c], entropy(ft_match[:,f], c_match[:,c])])
+        mi.append(list(mutual_info_regression(ft_match, c_match[:,c])))
+        print(f'done {c}', flush=True)
     
-    ecf_info = pd.DataFrame(ecf, columns=['synset', 'feature', 'entropy'])
-    ecf_file = kld_path / f'{model}_entropy_concept_feature.csv'
-    ecf_info.to_csv(ecf_file)
-
-    efc_info = pd.DataFrame(efc, columns=['feature', 'synset', 'entropy'])
-    efc_file = kld_path / f'{model}_entropy_feature_concept.csv'
-    efc_info.to_csv(efc_file)
+    mi = pd.DataFrame(mi, columns=fsk_ft, index=synsets)
+    mi_file = mi_path / f'{model}.csv'
+    mi.to_csv(mi_file)
 
 
 if __name__ == '__main__':   
@@ -52,4 +46,4 @@ if __name__ == '__main__':
     model = parser.parse_args().m
     project_path = Path(parser.parse_args().pp)
 
-    compute_KLD(project_path, model)
+    compute_mutual_information(project_path, model)

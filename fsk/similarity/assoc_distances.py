@@ -6,4 +6,4 @@ from gensim.scripts.glove2word2vec import glove2word2vec
 # Word2vec
 
 
-def get_co
+# def get_co
