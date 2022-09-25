@@ -33,18 +33,16 @@ def get_match(
     if return_np == True:
         match = match.detach().numpy()
     return match, labels
-    
+
 
 def get_concept_match_distance(
-    res_path, model, synsets_imgs, center=True, img_to_txt=True, from_preds=True
+    res_path, model, synsets_imgs, center=False, from_preds=True
 ):
     match, labels = get_match(
         res_path, model, synsets_imgs, center=center, avg=True
     )
-    if img_to_txt == False:
-        match = match.T
     if from_preds == True:
-        dist = match[np.triu_indices_from(match, k=1)]
+        dist = - match[np.triu_indices_from(match, k=1)]
         dist_labels = list(combinations(labels, 2))
     else:
         dist = pdist(match, 'cosine')

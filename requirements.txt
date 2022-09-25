@@ -8,6 +8,7 @@ seaborn
 datasets
 gensim
 nltk == 3.6.7
+spacy
 timm == 0.4.9
 tqdm
 torch == 1.11

@@ -70,7 +70,8 @@ class RSA():
                 self.models_info[idx]['name'] = f'{m}_{self.pred_type}'
                 if self.pred_type == 'concepts':
                     dist[idx][m], labels[idx][m] = get_concept_match_distance(
-                        self.results_path, model['dnn'], self.synsets_ids
+                        self.results_path, model['dnn'], self.synsets_ids,
+                        #from_preds=False
                     )
                 elif self.pred_type == 'features':
                     dist[idx][m], labels[idx][m] = get_feature_match_distance(
