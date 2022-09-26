@@ -8,7 +8,7 @@ import torch
 from transformers import BertTokenizer, BertConfig, BertModel
 from transformers import GPT2Tokenizer, GPT2Model
 
-from fsk.dataprep.utils import get_concepts, get_synsets_ids
+from fsk.dataprep.utils import get_synsets_ids
 
 
 class FtLanguage():
@@ -47,9 +47,6 @@ class FtLanguage():
             dataset[s] = [c] + definition + q + others
         self.synsets = synsets
         return dataset
-    
-    # def get_cc_captions(self):
-    #     return captions
 
 
 class FtGPT(FtLanguage):

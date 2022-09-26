@@ -10,15 +10,6 @@ COMPARISONS = [
     ['albef', 'sem', 'albef'], ['albef', 'bert', 'albef'], 
     ['albef', 'vit_16', 'albef'], ['vilt', 'sem', 'vilt'], 
     ['vilt', 'bert', 'vilt'], ['vilt', 'vit_32', 'vilt'],
-    # Compare different streams 
-    ['clip_img', 'clip_txt', None],
-    ['albef_img', 'albef_txt', None], ['albef_img', 'albef_multi', None], 
-    ['albef_txt', 'albef_multi', None],
-    # Compare multimodal with sem
-    ['clip_txt', 'sem', None], ['clip_img', 'sem', None],
-    ['albef_txt', 'sem', None], ['albef_img', 'sem', None],
-    ['albef_multi', 'sem', None], 
-    ['vilt_multi', 'sem', None],
     # Compare multimodal with unimodal
     ['clip_txt', 'gpt', None], ['clip_img', 'vit_32', None],
     ['albef_txt', 'bert', None], ['albef_img', 'vit_16', None],
