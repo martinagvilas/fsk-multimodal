@@ -5,12 +5,6 @@ from fsk.similarity.rsa import RSA
 
 
 COMPARISONS = [
-    # Compare predictions
-    ['clip', 'sem', 'clip'], ['clip', 'gpt', 'clip'], ['clip', 'vit_32', 'clip'],
-    ['albef', 'sem', 'albef'], ['albef', 'bert', 'albef'], 
-    ['albef', 'vit_16', 'albef'], ['vilt', 'sem', 'vilt'], 
-    ['vilt', 'bert', 'vilt'], ['vilt', 'vit_32', 'vilt'],
-    # Compare multimodal with unimodal
     ['clip_txt', 'gpt', None], ['clip_img', 'vit_32', None],
     ['albef_txt', 'bert', None], ['albef_img', 'vit_16', None],
     ['albef_multi', 'bert', None], ['albef_multi', 'vit_16', None], 

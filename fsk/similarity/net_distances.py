@@ -57,8 +57,6 @@ class NetDistances():
             if file.is_file():
                 with open(file, 'rb') as f:
                     self.distances[l_name], self.dist_labels[l_name] = pickle.load(f)
-        # for l, lb in labels.items():
-        #     assert lb == self.labels, "Loaded labels of layer {l} do not match"
 
     def compute_distances(self):
         if self.stream == 'img':
