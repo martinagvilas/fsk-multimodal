@@ -1,13 +1,11 @@
 # Probing feature-based semantic knowledge in Vision+Language deep neural networks
 
-{TODO: write description of the study and link to pre-print}
-
 ## 1. Download dataset information
 You will need to:
 
 1. Clone this repository
 ```
-git clone https://github.com/martinagvilas/fsk-multimodal.git
+git clone (anon)
 cd fsk-multimodal
 ```
 
@@ -18,13 +16,9 @@ prepare_data.sh
 You will be prompted for a password to download the THINGS dataset.
 Read the usage terms and retrieve this password [here](https://osf.io/srv7t).
 
-{TODO: Explain annotations files and give credits}
 
-4. Download the semantic feature norms dataset from McRae 2005 using 
+3. Download the semantic feature norms dataset from McRae 2005 using 
 [this link](https://sites.google.com/site/kenmcraelab/norms-data).
-
-{TODO: how to ensure the availability of these files}
-{TODO: how to rename the relevant file}
 
 
 ## 2. Install software
@@ -47,3 +41,32 @@ run:
 ```
 
 You can also select which model to run by changing the value of the `-m` flag.
+
+To compute the representational similarity analysis, run:
+
+```
+ python -m fsk.rsa.run -m all -pp {your path to the project folder}
+```
+
+You will also need to run the following:
+
+```
+ python -m fsk.rsa.pred_similarity -m {} -pp {your path to the project folder}
+```
+and
+
+```
+ python -m fsk.rsa.pred_similarity -m {} -pp {your path to the project folder}
+```
+for every model of {clip, vilt albef}.
+
+
+To compute the mutual information analysis, run:
+
+```
+ python -m fsk.feature_repr.mutual_information -m {} -pp {your path to the project folder}
+```
+for every model in {clip, vilt albef}.
+
+Once you got all the set of results, you can generate the figures and tables 
+for the manuscript with the notebook "demo_results.ipynb"
