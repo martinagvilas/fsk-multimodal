@@ -1,4 +1,4 @@
-# Probing feature-based semantic knowledge in Vision+Language deep neural networks
+# Evaluating Conceptual Knowledge in V+L models
 
 ## 1. Download dataset information
 You will need to:
