@@ -33,14 +33,20 @@ pip install .
 ```
 
 ## 3. Run experiments
-To compute the matching between each image and semantic feature using all models, 
-run:
+To compute the matching between each image and semantic feature using all models, run:
 
 ```
  python -m fsk.it_match.run -m all -pp {your path to the project folder}
 ```
 
 You can also select which model to run by changing the value of the `-m` flag.
+
+To compute the conceptual spaces for the unimodal models, run:
+
+```
+ python -m fsk.unet_features.run -m {} -pp {your path to the project folder}
+```
+for every choice of {vit_16, vit_32, gpt, bert}.
 
 To compute the representational similarity analysis, run:
 
@@ -68,5 +74,4 @@ To compute the mutual information analysis, run:
 ```
 for every model in {clip, vilt albef}.
 
-Once you got all the set of results, you can generate the figures and tables 
-for the manuscript with the notebook "demo_results.ipynb"
+Once you got all the set of results, you can generate the figures and tables for the manuscript with the notebook "demo_results.ipynb"

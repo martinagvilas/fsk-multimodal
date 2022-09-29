@@ -26,9 +26,6 @@ if __name__ == '__main__':
     if model.startswith('vit'):
         version = model.split('_')[1]
         FtVit(version, project_path, device=device).compute()
-    elif model.startswith('cls'):
-        version = model.split('_')[2]
-        ClsVit(version, project_path, batch_size=batch_size, device=device).compute()
     elif model == 'bert':
         FtBert(project_path, text_type='concept').compute()
     elif model == 'gpt':
